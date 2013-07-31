@@ -27,6 +27,18 @@
     <ClInclude Include="Touten.h">
       <Filter>头文件</Filter>
     </ClInclude>
+    <ClInclude Include="TTParser.h">
+      <Filter>头文件</Filter>
+    </ClInclude>
+    <ClInclude Include="TTASTree.h">
+      <Filter>头文件</Filter>
+    </ClInclude>
+    <ClInclude Include="SharedPtr.h">
+      <Filter>头文件</Filter>
+    </ClInclude>
+    <ClInclude Include="TTStaticArea.h">
+      <Filter>头文件</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="stdafx.cpp">
@@ -36,6 +48,12 @@
       <Filter>源文件</Filter>
     </ClCompile>
     <ClCompile Include="TTLexer.cpp">
+      <Filter>源文件</Filter>
+    </ClCompile>
+    <ClCompile Include="TTParser.cpp">
+      <Filter>源文件</Filter>
+    </ClCompile>
+    <ClCompile Include="TTStaticArea.cpp">
       <Filter>源文件</Filter>
     </ClCompile>
   </ItemGroup>

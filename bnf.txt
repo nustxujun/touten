@@ -1,0 +1,60 @@
+file ::= { [ global | local ] def [';'] }
+
+
+def ::=  ( varlist | function | field )
+
+
+varlist = name [ '=' exp] { ',' name ['=' exp] }
+
+
+function ::= 'function' name funcbody 
+
+
+field ::= 'filed' name fieldbody
+
+
+fieldbody ::= '{' block '}'
+
+
+block ::= {stat [ ';' ]}
+
+
+stat ::=  loop | cond | (shared | local) def | assgin | fieldbody 
+
+
+funcbody ::= [ '(' parlist ')'] '{' block'}'
+
+
+parlist ::= name { ',' name }
+			
+
+funcall ::= var '(' [args] ')'
+
+
+args ::= exp{, exp}
+
+
+assgin ::= var '=' exp |
+
+	'[' var { ',' var } ']' '=' exp
+
+	 
+exp ::= null | false | true |
+
+	number | string | funcall |
+
+	fieldbody | funcbody |
+
+	exp binop exp | unop exp | var 
+
+
+
+loop ::= while '(' exp ')' '{' block '}' |
+
+	 do '{' block '}' while '(' exp ')'
+
+
+cond ::= if '(' exp ')' (exp | '{' block '}') {elseif '(' exp ')' (exp | '{' block '}')} [else (exp | '{' block '}')]
+
+
+var ::= name  [ '[' exp ']']  {'.' var }  

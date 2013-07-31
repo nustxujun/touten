@@ -6,6 +6,7 @@
 #include <fstream>
 int _tmain(int argc, _TCHAR* argv[])
 {
+	
 	std::wfstream f(L"test.txt", std::ios_base::in);
 	if (!f) return 0;
 
@@ -14,11 +15,11 @@ int _tmain(int argc, _TCHAR* argv[])
 	f.seekg(0, std::ios_base::beg);
 	TT::Char* b = new TT::Char[size+1]();
 	f.read(b, size + 1);
-	TT::Lexer l(b);
+	//TT::Lexer l(b);
 
 	//try
 	//{
-	while(l.next().type != TT::TT_EOS);
+	//while(l.next().type != TT::TT_EOS);
 	//}
 	//catch(...)
 	//{};

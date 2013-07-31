@@ -74,15 +74,21 @@
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
+    <ClInclude Include="SharedPtr.h" />
     <ClInclude Include="stdafx.h" />
     <ClInclude Include="targetver.h" />
     <ClInclude Include="Touten.h" />
+    <ClInclude Include="TTASTree.h" />
     <ClInclude Include="TTLexer.h" />
+    <ClInclude Include="TTParser.h" />
+    <ClInclude Include="TTStaticArea.h" />
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="stdafx.cpp" />
     <ClCompile Include="touten.cpp" />
     <ClCompile Include="TTLexer.cpp" />
+    <ClCompile Include="TTParser.cpp" />
+    <ClCompile Include="TTStaticArea.cpp" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">
