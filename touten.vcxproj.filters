@@ -39,12 +39,30 @@
     <ClInclude Include="TTStaticArea.h">
       <Filter>头文件</Filter>
     </ClInclude>
+    <ClInclude Include="TTASTNode.h">
+      <Filter>头文件</Filter>
+    </ClInclude>
+    <ClInclude Include="ToutenCommon.h">
+      <Filter>头文件</Filter>
+    </ClInclude>
+    <ClInclude Include="TTScope.h">
+      <Filter>头文件</Filter>
+    </ClInclude>
+    <ClInclude Include="TTSymbolMap.h">
+      <Filter>头文件</Filter>
+    </ClInclude>
+    <ClInclude Include="TTAssembler.h">
+      <Filter>头文件</Filter>
+    </ClInclude>
+    <ClInclude Include="TTDefinition.h">
+      <Filter>头文件</Filter>
+    </ClInclude>
+    <ClInclude Include="TTType.h">
+      <Filter>头文件</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="stdafx.cpp">
-      <Filter>源文件</Filter>
-    </ClCompile>
-    <ClCompile Include="touten.cpp">
       <Filter>源文件</Filter>
     </ClCompile>
     <ClCompile Include="TTLexer.cpp">
@@ -54,6 +72,15 @@
       <Filter>源文件</Filter>
     </ClCompile>
     <ClCompile Include="TTStaticArea.cpp">
+      <Filter>源文件</Filter>
+    </ClCompile>
+    <ClCompile Include="TTASTree.cpp">
+      <Filter>源文件</Filter>
+    </ClCompile>
+    <ClCompile Include="TTScope.cpp">
+      <Filter>源文件</Filter>
+    </ClCompile>
+    <ClCompile Include="Touten.cpp">
       <Filter>源文件</Filter>
     </ClCompile>
   </ItemGroup>

@@ -78,16 +78,25 @@
     <ClInclude Include="stdafx.h" />
     <ClInclude Include="targetver.h" />
     <ClInclude Include="Touten.h" />
+    <ClInclude Include="ToutenCommon.h" />
+    <ClInclude Include="TTAssembler.h" />
+    <ClInclude Include="TTASTNode.h" />
     <ClInclude Include="TTASTree.h" />
+    <ClInclude Include="TTDefinition.h" />
     <ClInclude Include="TTLexer.h" />
     <ClInclude Include="TTParser.h" />
+    <ClInclude Include="TTScope.h" />
     <ClInclude Include="TTStaticArea.h" />
+    <ClInclude Include="TTSymbolMap.h" />
+    <ClInclude Include="TTType.h" />
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="stdafx.cpp" />
-    <ClCompile Include="touten.cpp" />
+    <ClCompile Include="Touten.cpp" />
+    <ClCompile Include="TTASTree.cpp" />
     <ClCompile Include="TTLexer.cpp" />
     <ClCompile Include="TTParser.cpp" />
+    <ClCompile Include="TTScope.cpp" />
     <ClCompile Include="TTStaticArea.cpp" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />

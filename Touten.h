@@ -1,14 +1,21 @@
 #ifndef _Touten_H_
 #define _Touten_H_
 
-#include <assert.h>
+
+
+#include "ToutenCommon.h"
+#include "TTStaticArea.h"
+#include "TTLexer.h"
+#include "TTParser.h"
+
 
 namespace TT
 {
-	typedef wchar_t Char;
-
-
-
+	class Touten
+	{
+	public :
+		bool loadFile(const String& name);
+	};
 }
 
 #endif

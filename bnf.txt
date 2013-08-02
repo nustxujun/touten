@@ -19,7 +19,7 @@ fieldbody ::= '{' block '}'
 block ::= {stat [ ';' ]}
 
 
-stat ::=  loop | cond | (shared | local) def | assgin | fieldbody 
+stat ::=  loop | cond | (shared | local) def | assgin | fieldbody | funcall | return
 
 
 funcbody ::= [ '(' parlist ')'] '{' block'}'
@@ -45,7 +45,9 @@ exp ::= null | false | true |
 
 	fieldbody | funcbody |
 
-	exp binop exp | unop exp | var 
+	exp binop exp | unop exp | var |
+
+	'(' exp ')'
 
 
 

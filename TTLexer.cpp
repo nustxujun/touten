@@ -6,7 +6,7 @@ using namespace TT;
 #define TTLEXER_ASSERT(e,t) { if (!(e)) { TTLEXER_EXCEPT(t) } }
 
 Lexer::Lexer(const Char* buff, StaticArea& sa):
-	mRead(buff), mLookahead(),mLineNum(0), mStaticArea(sa)
+	mRead(buff),mLineNum(0), mStaticArea(sa)
 {
 	
 }
@@ -14,21 +14,8 @@ Lexer::Lexer(const Char* buff, StaticArea& sa):
 Token Lexer::next()
 {
 	Token t;
-	if (mLookahead.type == TT_ERROR)
-		parse(mRead, t);
-	else
-	{
-		t = mLookahead;
-		mLookahead.type = TT_ERROR;
-	}
+	parse(mRead, t);
 	return t;
-}
-
-Token Lexer::lookahead()
-{
-	assert(mLookahead.type = TT_ERROR);
-	parse(mRead, mLookahead);
-	return mLookahead;
 }
 
 void Lexer::incLineNum()
@@ -94,7 +81,7 @@ void Lexer::parse(const Char*& read, Token& t)
 					t.size = 2, ++read;
 				else
 					t.size = 1;
-
+				return;
 			}
 			break;
 		case '!':
@@ -119,14 +106,15 @@ void Lexer::parse(const Char*& read, Token& t)
 				t.lineNum = mLineNum;
 				if (*read == '=')
 				{
+					t.type = TT_OPERATOR;
 					t.size = 2;
 					++read;
 				}
 				else
 				{
-					t.type = TT_OPERATOR;
 					t.size = 1;
 				}
+				return;
 			}
 			break;
 		default:
@@ -420,19 +408,20 @@ bool Lexer::getReserved(const Char*& read, Token& token)
 		L"switch",
 		L"null",
 		L"true",
-		L"false"
+		L"false",
+		L"return"
 	};
 
 	
 
-	for (size_t i = 0; i < sizeof(reserved); ++i)
+	for (size_t i = 0; i < (sizeof(reserved) / sizeof(const Char*)); ++i)
 	{
 		const Char* src = read;
 		const Char* mod = reserved[i];
 
 		while (true)
 		{
-			if ( *mod++ == *src++) continue;
+			if ( *mod++ == *src++ && *mod != 0 && *src != 0) continue;
 
 			if ( *mod != 0 ) break;
 			//зЂвт else elseif Лђеп else if
@@ -448,7 +437,6 @@ bool Lexer::getReserved(const Char*& read, Token& token)
 
 	return false;
 }
-
 
 bool Lexer::isChar(Char r)
 {

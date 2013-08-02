@@ -1,11 +1,8 @@
 #ifndef _TTLexer_H_
 #define _TTLexer_H_
 
-#include "Touten.h"
+#include "ToutenCommon.h"
 #include "TTStaticArea.h"
-
-#define MAX_VAR_NAME_LEN 128
-
 
 namespace TT
 {
@@ -37,6 +34,7 @@ namespace TT
 		TT_NULL,
 		TT_TRUE,
 		TT_FALSE,
+		TT_RETURN,
 
 		TT_EOS,
 	};
@@ -87,12 +85,10 @@ namespace TT
 		static const int eof = 0;
 	public :
 		Lexer(const Char* buff, StaticArea& sa);
-
 		Token next();
-		Token lookahead();
-		void incLineNum();
 
 	private:
+		void incLineNum();
 		void parse(const Char*& read, Token& token);
 		void skipLine(const Char*& read);
 		bool getVal(const Char*& read, Token& token);
@@ -103,7 +99,6 @@ namespace TT
 		bool isChar(Char r);
 		bool isDigit(Char r);
 	private:
-		Token mLookahead;
 		const Char* mRead;
 		size_t mLineNum;
 		StaticArea& mStaticArea;
