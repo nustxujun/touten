@@ -16,7 +16,7 @@ namespace TT
 		Scope::Ptr getParent()const;
 
 		Symbol* getSymbol(const String& name);
-
+		Symbol* createSymbol(const String& name, SymbolType st, AccessType at);
 	private:
 		SymbolMap mSymbols;
 		Scope::Ptr mParent;
@@ -34,9 +34,7 @@ namespace TT
 		Scope::Ptr leaveScope();
 
 		Scope::Ptr getScope(const String& name);
-
-		Symbol* getSymbol(const String& name);
-
+		Scope::Ptr getGlobal();
 	private:
 		Scope::Ptr createScope();
 		Scope::Ptr createScope(const String& name);
@@ -48,6 +46,7 @@ namespace TT
 
 		typedef std::stack<Scope::Ptr> ScopeStack;
 		ScopeStack mStack;
+		Scope::Ptr mGlobal;
 	};
 }
 

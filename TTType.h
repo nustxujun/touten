@@ -9,47 +9,60 @@ namespace TT
 
 		//binop
 		OT_DAND,			// &&
-		OT_DOR	= OT_DAND,	// ||
+		OT_DOR	,	// ||
 
 		OT_AND,				// &
-		OT_OR	= OT_AND,	// ||
-		OT_XOR	= OT_AND,	// ^
+		OT_OR	,	// ||
+		OT_XOR	,	// ^
 
 		OT_EQ,				// ==
-		OT_NE	= OT_EQ,	// !=
+		OT_NE	,	// !=
 
 		OT_GREAT,			// >
-		OT_LESS	= OT_GREAT,	// <
-		OT_GE	= OT_GREAT,	// >=
-		OT_LE	= OT_GREAT,	// <=
+		OT_LESS	,	// <
+		OT_GE	,	// >=
+		OT_LE	,	// <=
 
 		OT_ADD,				// +
-		OT_SUB	= OT_ADD,	// -
+		OT_SUB	,	// -
 
 		OT_MUL,				// *
-		OT_DIV	= OT_MUL,	// /
-		OT_MOD	= OT_MUL,	// %
+		OT_DIV	,	// /
+		OT_MOD	,	// %
 
 		//unop
 		OT_EXC,				// !
-		OT_NS	= OT_EXC,	// - 
+		OT_NS	,	// - 
 	};
 
-	enum VariableType
+	const int OptPre[] = 
 	{
-		VT_GLOBAL,
-		VT_SHARED,
-		VT_LOCAL,
+		0,
+		1,1,
+		2,2,2,
+		3,3,
+		4,4,4,4,
+		5,5,
+		6,6,6,
+		7,7
+	};
+
+	enum AccessType
+	{
+		AT_DEFAULT,
+		AT_GLOBAL,
+		AT_SHARED,
+		AT_LOCAL,
 	};
 
 	enum ConstantType
 	{
-		VT_NULL,
-		VT_TRUE,
-		VT_FALSE,
-		VT_INTEGER,
-		VT_DOUBLE,
-		VT_STRING,		
+		CT_NULL,
+		CT_TRUE,
+		CT_FALSE,
+		CT_INTEGER,
+		CT_DOUBLE,
+		CT_STRING,		
 	};
 }
 

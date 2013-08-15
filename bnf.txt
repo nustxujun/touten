@@ -7,7 +7,7 @@ def ::=  ( varlist | function | field )
 varlist = name [ '=' exp] { ',' name ['=' exp] }
 
 
-function ::= 'function' name funcbody 
+function ::= 'function' name funcbody
 
 
 field ::= 'filed' name fieldbody
@@ -19,38 +19,43 @@ fieldbody ::= '{' block '}'
 block ::= {stat [ ';' ]}
 
 
-stat ::=  loop | cond | (shared | local) def | assgin | fieldbody | funcall | return
+stat ::=  loop | cond | (shared | local) def | assgin | fieldbody | funcall | return
+
+
+return ::= 'return' exp{',' exp}
 
 
 funcbody ::= [ '(' parlist ')'] '{' block'}'
 
 
-parlist ::= name { ',' name }
-			
-
-funcall ::= var '(' [args] ')'
+parlist ::= name { ',' name}
 
 
-args ::= exp{, exp}
+funcall ::= (name | var) '(' [args] ')'   ///存在[] . 操作一定是var,否则不明，所以这里特殊处理下
+
+
+args ::= exp{',' exp}
 
 
 assgin ::= var '=' exp |
 
-	'[' var { ',' var } ']' '=' exp
+		'[' var { ',' var } ']' '=' exp
 
 	 
 exp ::= null | false | true |
 
-	number | string | funcall |
+		number | string |
 
-	fieldbody | funcbody |
+		accessSymbol |
 
-	exp binop exp | unop exp | var |
+		fieldbody | funcbody |
 
-	'(' exp ')'
+		exp binop exp | unop exp |  
+
+		'(' exp ')'
 
 
-
+		
 loop ::= while '(' exp ')' '{' block '}' |
 
 	 do '{' block '}' while '(' exp ')'
@@ -59,4 +64,7 @@ loop ::= while '(' exp ')' '{' block '}' |
 cond ::= if '(' exp ')' (exp | '{' block '}') {elseif '(' exp ')' (exp | '{' block '}')} [else (exp | '{' block '}')]
 
 
-var ::= name  [ '[' exp ']']  {'.' var }  
+var ::= name  {('[' exp ']')  | ('.' string }    ///a.b 作为 a['b']的语法糖存在，动态语言似乎很难实现真正的成员
+
+
+accessSymbol ::=  var | funcall  //单独为exp文法考虑的

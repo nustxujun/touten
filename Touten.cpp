@@ -16,7 +16,7 @@ int _tmain(int argc, _TCHAR* argv[])
 
 using namespace TT;
 
-bool loadFile(const String& name)
+bool Touten::loadFile(const String& name)
 {
 	std::wfstream f(name.c_str(), std::ios_base::in);
 	if (!f) return 0;
@@ -56,12 +56,17 @@ bool loadFile(const String& name)
 	i.l = &lexer;
 
 	Parser parser;
-	try {parser.parse(&i);}
-	catch (...)
-	{
-		return false;
-	}
+	ASTNode::Ptr ast;
+	 ast = parser.parse(&i);
 
+
+	StackBasedAssembler::Codes codes;
+	ScopeManager scopemgr;
+	ConstantPool constpool(1024);
+
+	StackBasedAssembler assembler(codes, scopemgr, constpool);
+
+	assembler.assemble(ast);
 	return true;
 }
 

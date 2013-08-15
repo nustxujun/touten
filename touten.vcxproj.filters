@@ -60,6 +60,15 @@
     <ClInclude Include="TTType.h">
       <Filter>头文件</Filter>
     </ClInclude>
+    <ClInclude Include="TTTranslator.h">
+      <Filter>头文件</Filter>
+    </ClInclude>
+    <ClInclude Include="TTConstantPool.h">
+      <Filter>头文件</Filter>
+    </ClInclude>
+    <ClInclude Include="TTStackBasedAssembler.h">
+      <Filter>头文件</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="stdafx.cpp">
@@ -81,6 +90,15 @@
       <Filter>源文件</Filter>
     </ClCompile>
     <ClCompile Include="Touten.cpp">
+      <Filter>源文件</Filter>
+    </ClCompile>
+    <ClCompile Include="TTConstantPool.cpp">
+      <Filter>源文件</Filter>
+    </ClCompile>
+    <ClCompile Include="TTStackBasedAssembler.cpp">
+      <Filter>源文件</Filter>
+    </ClCompile>
+    <ClCompile Include="TTSymbolMap.cpp">
       <Filter>源文件</Filter>
     </ClCompile>
   </ItemGroup>

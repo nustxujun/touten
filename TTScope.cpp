@@ -16,19 +16,24 @@ Scope::Ptr Scope::getParent()const
 Symbol* Scope::getSymbol(const String& name)
 {
 	Symbol* s = mSymbols.getSymbol(name);
-	if (s == 0)
+	if (s == 0 && !mParent.isNull())
 		return mParent->getSymbol(name);
 	return s;
 }
 
-
+Symbol* Scope::createSymbol(const String& name, SymbolType st, AccessType at)
+{
+	return mSymbols.createSymbol(name, st, at);
+}
 
 const String ScopeManager::anonymous_scope = L"__anonymous_scope";
 const String ScopeManager::global_scope = L"__global_scope";
 
 ScopeManager::ScopeManager()
 {
-	mStack.push(createScope(global_scope));
+	mGlobal = new Scope(0);
+	mScopes[global_scope] = mGlobal;
+	mStack.push(mGlobal);
 }
 
 ScopeManager::~ScopeManager()
@@ -69,9 +74,9 @@ Scope::Ptr ScopeManager::getScope(const String& name)
 	return r->second;
 }
 
-Symbol* ScopeManager::getSymbol(const String& name)
+Scope::Ptr ScopeManager::getGlobal()
 {
-	return mStack.top()->getSymbol(name);
+	return mGlobal;
 }
 
 Scope::Ptr ScopeManager::createScope()

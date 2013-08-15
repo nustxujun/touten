@@ -2,6 +2,8 @@
 #define _TTSymbolMap_H_
 
 #include "ToutenCommon.h"
+#include "TTType.h"
+#include <vector>
 
 namespace TT
 {
@@ -11,25 +13,32 @@ namespace TT
 		ST_FIELD,
 		ST_FUNCTION,
 		ST_VARIABLE,
-
-
-		ST_GLOBAL  = 1 << 4,
-		ST_SHARED  = 1 << 5,
-		ST_LOCAL   = 1 << 6,
 	};
 
 	class Symbol
 	{
 	public:
-		SymbolType type;
-		String name;
+		AccessType actype;
+		SymbolType symtype;
+		size_t addrOffset;
+
+		bool isdefine;
+		size_t codes;
 	};
 
 	class SymbolMap
 	{
 	public :
-		Symbol* createSymbol(const String& name);
+		~SymbolMap();
+		Symbol* createSymbol(const String& name, SymbolType st, AccessType at);
 		Symbol* getSymbol(const String& name);
+
+	private:
+		Symbol* createSymbolImpl(SymbolType type);
+
+	private:
+		typedef TTMap<String, Symbol*> Symbols;
+		Symbols mSymbols;
 	};
 }
 

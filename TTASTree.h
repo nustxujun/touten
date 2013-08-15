@@ -22,7 +22,8 @@ namespace TT
 		{
 			ASTNodeList* t = new ASTNodeList();
 			obj = o;
-			return t;
+			next = t;
+			return next;
 		}
 	};
 
@@ -39,11 +40,19 @@ namespace TT
 	{
 		ASTNODE_VISIT_FUNC_DEC;
 	public :
-		Char name[MAX_VAR_NAME_LEN];
-		VariableType type;		
+		//Char name[MAX_VAR_NAME_LEN];
+		ASTNode::Ptr var;		
 
 		ASTNode::Ptr index;//可以是下标可以是map的key
-		ASTNode::Ptr member;
+	};
+
+	class NameNode: public ASTNode
+	{
+		ASTNODE_VISIT_FUNC_DEC;
+	public :
+		AccessType type;		
+		Char name[MAX_VAR_NAME_LEN];
+		bool forcedefine;//是否产生同名符号，如果在相同域下产生同名符号的话会出错
 	};
 
 	class AssginNode: public ASTNode
@@ -65,6 +74,7 @@ namespace TT
 	{
 		ASTNODE_VISIT_FUNC_DEC;
 	public :
+		AccessType acctype;
 		Char name[MAX_VAR_NAME_LEN];
 		ASTNodeList::Ptr paras;
 		ASTNode::Ptr body;
@@ -76,6 +86,8 @@ namespace TT
 	public :
 		Char name[MAX_VAR_NAME_LEN];
 		ASTNode::Ptr body;
+		AccessType acctype;
+
 	};
 
 	class BlockNode: public ASTNode
@@ -90,7 +102,12 @@ namespace TT
 		ASTNODE_VISIT_FUNC_DEC;
 	public :
 		ConstantType type;
-		Char value[MAX_VAR_NAME_LEN];
+		union
+		{
+			int i;
+			double d;
+			Char s[MAX_VAR_NAME_LEN];
+		}value ;
 	};
 
 	class FuncCallNode: public ASTNode
@@ -133,7 +150,8 @@ namespace TT
 	{
 		ASTNODE_VISIT_FUNC_DEC;
 	public :
-		ASTNode::Ptr expr;
+		ASTNodeList::Ptr exprs;
+
 	};
 
 #define REGISTOR_NODE_VISIT_FUNC(t) virtual void visit(t *) = 0;
@@ -154,6 +172,9 @@ namespace TT
 		REGISTOR_NODE_VISIT_FUNC(LoopNode);
 		REGISTOR_NODE_VISIT_FUNC(CondIFNode);
 		REGISTOR_NODE_VISIT_FUNC(ReturnNode);
+		REGISTOR_NODE_VISIT_FUNC(NameNode);
+
+		
 	};
 }
 
