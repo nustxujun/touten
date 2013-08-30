@@ -8,6 +8,7 @@
 #include "TTLexer.h"
 #include "TTParser.h"
 #include "TTStackBasedAssembler.h"
+#include "TTStackBasedInterpreter.h"
 
 namespace TT
 {

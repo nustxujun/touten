@@ -6,66 +6,24 @@
 #include "TTAssembler.h"
 #include "TTScope.h"
 #include "TTConstantPool.h"
+#include "TTInterpreterCommon.h"
 
 namespace TT
 {
+
+	typedef std::vector<char> Codes;
+
 	class StackBasedAssembler: public ASTNodeVisitor
 	{
-		enum Instruction
-		{
-			//var
-			LOAD,
-			LOAD_CONST,
-			STORE,
-			ADDR,
 
-			//func
-			CALL,
-
-			//opt
-			ASSGIN,
-			ASSGIN_ARRAY,
-
-			RETURN,
-			RETURN_VALUE,
-			RETURN_ARRAY,
-
-
-			//binop
-			DAND,
-			DOR,
-			AND,
-			OR,
-			XOR,
-			EQ,
-			NE,
-			GREAT,
-			LESS,
-			GE,
-			LE,
-			ADD,
-			SUB,
-			MUL,
-			DIV,
-			MOD,
-
-			//unop
-			EXC,
-			NS,
-
-
-			VOID
-		};
-
-		typedef __int32 Operand;
-	public :
-		typedef std::vector<char> Codes;
 
 	public:
-		StackBasedAssembler(StackBasedAssembler::Codes& c, 
+		StackBasedAssembler(Codes& c, 
 			ScopeManager& sm, ConstantPool& cp);
 
 		void assemble(ASTNode::Ptr ast);
+		bool hasMain()const ;
+		size_t getMain()const;
 	private:
 
 		void visit(FileNode* node);
@@ -127,6 +85,8 @@ namespace TT
 
 		void addbackfill(Symbol*, size_t instr);
 		
+		size_t mMain;
+		bool mHasMain;
 	};
 }
 

@@ -11,11 +11,16 @@ namespace TT
 	{
 	public :
 		typedef SharedPtr<Scope> Ptr;
+		struct SymbolObj
+		{
+			Symbol* sym;
+			bool	local;
+		};
 	public :
 		Scope(Scope::Ptr parent);
 		Scope::Ptr getParent()const;
 
-		Symbol* getSymbol(const String& name);
+		SymbolObj getSymbol(const String& name);
 		Symbol* createSymbol(const String& name, SymbolType st, AccessType at);
 	private:
 		SymbolMap mSymbols;

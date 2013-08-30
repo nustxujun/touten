@@ -36,7 +36,7 @@ namespace TT
 		ASTNode::Ptr parseStat(ParserInput* input);
 		ASTNode::Ptr parseLoop(ParserInput* input);
 		ASTNode::Ptr parseCond(ParserInput* input);
-		ASTNode::Ptr parseVar(ParserInput* input);
+		ASTNode::Ptr parseVar(ParserInput* input, bool left, void** nameptr = 0);
 		ASTNode::Ptr parseAssgin(ParserInput* input, ASTNode::Ptr pre = 0);
 		ASTNode::Ptr parseUnop(ParserInput* input);
 		ASTNode::Ptr parseFuncCall(ParserInput* input, ASTNode::Ptr pre = 0);

@@ -17,6 +17,7 @@ Symbol* SymbolMap::createSymbol(const String& name, SymbolType st, AccessType at
 	s->actype = at;
 	s->symtype = st;
 	s->addrOffset = mSymbols.size();
+	s->isdefine = false;
 
 	auto result = mSymbols.insert(Symbols::value_type(name, s));
 	if (!result.second)

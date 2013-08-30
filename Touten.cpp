@@ -60,13 +60,18 @@ bool Touten::loadFile(const String& name)
 	 ast = parser.parse(&i);
 
 
-	StackBasedAssembler::Codes codes;
+	Codes codes;
 	ScopeManager scopemgr;
 	ConstantPool constpool(1024);
 
 	StackBasedAssembler assembler(codes, scopemgr, constpool);
 
 	assembler.assemble(ast);
+
+	StackBasedInterpreter interpreter(codes, constpool);
+	
+	if (assembler.hasMain())
+		interpreter.execute(assembler.getMain());
 	return true;
 }
 

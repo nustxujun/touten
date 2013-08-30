@@ -13,12 +13,17 @@ Scope::Ptr Scope::getParent()const
 	return mParent;
 }
 
-Symbol* Scope::getSymbol(const String& name)
+Scope::SymbolObj Scope::getSymbol(const String& name)
 {
-	Symbol* s = mSymbols.getSymbol(name);
-	if (s == 0 && !mParent.isNull())
-		return mParent->getSymbol(name);
-	return s;
+	SymbolObj obj;
+	obj.local = true;
+	obj.sym = mSymbols.getSymbol(name);
+	if (obj.sym == 0 && !mParent.isNull())
+	{
+		obj = mParent->getSymbol(name);
+		obj.local = false;
+	}
+	return obj;
 }
 
 Symbol* Scope::createSymbol(const String& name, SymbolType st, AccessType at)

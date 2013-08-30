@@ -54,6 +54,7 @@
     <Link>
       <SubSystem>Console</SubSystem>
       <GenerateDebugInformation>true</GenerateDebugInformation>
+      <Profile>true</Profile>
     </Link>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
@@ -84,10 +85,12 @@
     <ClInclude Include="TTASTree.h" />
     <ClInclude Include="TTConstantPool.h" />
     <ClInclude Include="TTDefinition.h" />
+    <ClInclude Include="TTInterpreterCommon.h" />
     <ClInclude Include="TTLexer.h" />
     <ClInclude Include="TTParser.h" />
     <ClInclude Include="TTScope.h" />
     <ClInclude Include="TTStackBasedAssembler.h" />
+    <ClInclude Include="TTStackBasedInterpreter.h" />
     <ClInclude Include="TTStaticArea.h" />
     <ClInclude Include="TTSymbolMap.h" />
     <ClInclude Include="TTTranslator.h" />
@@ -98,10 +101,12 @@
     <ClCompile Include="Touten.cpp" />
     <ClCompile Include="TTASTree.cpp" />
     <ClCompile Include="TTConstantPool.cpp" />
+    <ClCompile Include="TTInterpreterCommon.cpp" />
     <ClCompile Include="TTLexer.cpp" />
     <ClCompile Include="TTParser.cpp" />
     <ClCompile Include="TTScope.cpp" />
     <ClCompile Include="TTStackBasedAssembler.cpp" />
+    <ClCompile Include="TTStackBasedInterpreter.cpp" />
     <ClCompile Include="TTStaticArea.cpp" />
     <ClCompile Include="TTSymbolMap.cpp" />
   </ItemGroup>

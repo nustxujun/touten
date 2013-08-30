@@ -7,12 +7,7 @@ ConstantPool::ConstantPool(size_t cap)
 	mData = mLast = new char[cap];
 	mTail = mData + cap;
 
-	const ConstantType cts[] = 
-	{
-		CT_NULL, CT_TRUE, CT_FALSE
-	};
 
-	add(cts,sizeof(cts));
 
 }
 
@@ -22,7 +17,7 @@ ConstantPool::~ConstantPool()
 	mData = mTail = mLast = 0;
 }
 
-size_t ConstantPool::add(const void* buff, size_t s)
+size_t ConstantPool::write(const void* buff, size_t s)
 {
 	size_t offset = size();
 	if (s + mLast >= mTail)
@@ -34,7 +29,7 @@ size_t ConstantPool::add(const void* buff, size_t s)
 	return offset;
 }
 
-void* ConstantPool::get(size_t offset)
+void* ConstantPool::get(size_t offset)const
 {
 	return mData + offset;
 }

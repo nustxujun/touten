@@ -4,7 +4,7 @@
 namespace TT
 {
 	enum OperatorType
-	{
+	{//注意这里顺序影响计算时候的优先级
 		OT_VOID,
 
 		//binop

@@ -23,7 +23,7 @@ namespace TT
 		size_t addrOffset;
 
 		bool isdefine;
-		size_t codes;
+		size_t ex;
 	};
 
 	class SymbolMap

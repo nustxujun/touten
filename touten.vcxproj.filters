@@ -69,6 +69,12 @@
     <ClInclude Include="TTStackBasedAssembler.h">
       <Filter>头文件</Filter>
     </ClInclude>
+    <ClInclude Include="TTStackBasedInterpreter.h">
+      <Filter>头文件</Filter>
+    </ClInclude>
+    <ClInclude Include="TTInterpreterCommon.h">
+      <Filter>头文件</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="stdafx.cpp">
@@ -99,6 +105,12 @@
       <Filter>源文件</Filter>
     </ClCompile>
     <ClCompile Include="TTSymbolMap.cpp">
+      <Filter>源文件</Filter>
+    </ClCompile>
+    <ClCompile Include="TTStackBasedInterpreter.cpp">
+      <Filter>源文件</Filter>
+    </ClCompile>
+    <ClCompile Include="TTInterpreterCommon.cpp">
       <Filter>源文件</Filter>
     </ClCompile>
   </ItemGroup>

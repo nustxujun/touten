@@ -28,10 +28,10 @@ return ::= 'return' exp{',' exp}
 funcbody ::= [ '(' parlist ')'] '{' block'}'
 
 
-parlist ::= name { ',' name}
+parlist ::= var { ',' var}
 
 
-funcall ::= (name | var) '(' [args] ')'   ///存在[] . 操作一定是var,否则不明，所以这里特殊处理下
+funcall ::=  var '(' [args] ')'   ///存在[] . 操作一定是var,否则不明，所以这里特殊处理下
 
 
 args ::= exp{',' exp}

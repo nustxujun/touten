@@ -36,23 +36,24 @@ namespace TT
 		ASTNodeList::Ptr defs;
 	};
 
-	class VarNode: public ASTNode
-	{
-		ASTNODE_VISIT_FUNC_DEC;
-	public :
-		//Char name[MAX_VAR_NAME_LEN];
-		ASTNode::Ptr var;		
-
-		ASTNode::Ptr index;//可以是下标可以是map的key
-	};
-
 	class NameNode: public ASTNode
 	{
 		ASTNODE_VISIT_FUNC_DEC;
 	public :
 		AccessType type;		
 		Char name[MAX_VAR_NAME_LEN];
-		bool forcedefine;//是否产生同名符号，如果在相同域下产生同名符号的话会出错
+
+	};
+
+	class VarNode: public ASTNode
+	{
+		ASTNODE_VISIT_FUNC_DEC;
+	public :
+		ASTNode::Ptr var;		
+		ASTNodeList::Ptr indexs;//可以是下标可以是map的key
+				
+		bool ref;
+		bool left;
 	};
 
 	class AssginNode: public ASTNode
