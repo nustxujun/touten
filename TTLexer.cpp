@@ -62,10 +62,17 @@ void Lexer::parse(const Char*& read, Token& t)
 				skipLine(read);
 			}
 			break;
-		case '~':case '%':case '^':	case '*':case '(':case ')':case '-':	case '+':
-		case '{':case '}':case '[':	case ']':case ';':case ',':case '.':
+		case '~':case '%':case '^':	case '*':case '-':	case '+':case '.':
 			{
 				t.type = TT_OPERATOR;
+				t.string = read++;
+				t.size = 1;
+				t.lineNum = mLineNum;
+			}
+			return;
+		case '{':case '}':case '[':	case ']':case ';':case ',':case '(':case ')':
+			{
+				t.type = TT_DELIMITER;
 				t.string = read++;
 				t.size = 1;
 				t.lineNum = mLineNum;
@@ -421,8 +428,11 @@ bool Lexer::getReserved(const Char*& read, Token& token)
 
 		while (true)
 		{
-			if ( *mod++ == *src++ && *mod != 0 && *src != 0) continue;
-
+			if (*src != 0 && *mod != 0 && *mod == *src ) 
+			{
+				++mod;++src;
+				continue;
+			}
 			if ( *mod != 0 ) break;
 			//зЂвт else elseif Лђеп else if
 			if (isChar(*src) || isDigit(*src) || *src == '_') break;

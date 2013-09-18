@@ -52,8 +52,6 @@ namespace TT
 		ASTNode::Ptr var;		
 		ASTNodeList::Ptr indexs;//可以是下标可以是map的key
 				
-		bool ref;
-		bool left;
 	};
 
 	class AssginNode: public ASTNode

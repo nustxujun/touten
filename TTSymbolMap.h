@@ -13,6 +13,7 @@ namespace TT
 		ST_FIELD,
 		ST_FUNCTION,
 		ST_VARIABLE,
+		ST_CPP_FUNC,
 	};
 
 	class Symbol
@@ -23,7 +24,6 @@ namespace TT
 		size_t addrOffset;
 
 		bool isdefine;
-		size_t ex;
 	};
 
 	class SymbolMap

@@ -1,18 +1,13 @@
 #ifndef _TTStackBasedAssembler_H_
 #define _TTStackBasedAssembler_H_
 
-#include <vector>
 #include "TTASTree.h"
 #include "TTAssembler.h"
 #include "TTScope.h"
 #include "TTConstantPool.h"
 #include "TTInterpreterCommon.h"
-
 namespace TT
 {
-
-	typedef std::vector<char> Codes;
-
 	class StackBasedAssembler: public ASTNodeVisitor
 	{
 
@@ -50,11 +45,16 @@ namespace TT
 		template <class T>
 		size_t addCode(const T& c)
 		{
+			return addCode(&c, sizeof(T));
+		}
+
+		size_t addCode(const void* b, size_t s)
+		{
 			size_t head = mInstruction;
-			char* code = (char*)&c;
-			for (int i = 0; i < sizeof(T); ++i, ++mInstruction)
+			const char* code = (const char*)b;
+			for (size_t i = 0; i < s; ++i, ++mInstruction)
 				mCodes.push_back(*code++);
-			return head;
+			return head;			
 		}
 
 		template <class T>
@@ -79,6 +79,7 @@ namespace TT
 		Scope::Ptr	mCurScope;
 		Symbol*		mCurSymbol;
 		size_t		mCurConst;
+		bool		mIsFuncall;
 
 		typedef TTMap<Symbol*, std::vector<size_t>> BackFill;
 		BackFill mBackFill;

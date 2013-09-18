@@ -1,19 +1,17 @@
 #include "TTConstantPool.h"
+#include "TTMemoryAllocator.h"
 #include <memory.h>
 using namespace TT;
 
 ConstantPool::ConstantPool(size_t cap)
 {
-	mData = mLast = new char[cap];
+	mData = mLast = (char*)TT_MALLOC(cap);
 	mTail = mData + cap;
-
-
-
 }
 
 ConstantPool::~ConstantPool()
 {
-	delete mData;
+	TT_FREE( mData);
 	mData = mTail = mLast = 0;
 }
 
@@ -46,11 +44,20 @@ const void* ConstantPool::data()const
 
 void ConstantPool::reserve(size_t s)
 {
-	char* temp = new char[s];
 	size_t offset = size();
-	memcpy(temp, mData, offset);
-	delete mData;
+	char* temp = (char*)TT_REALLOC(mData, s);
 	mData = temp;
 	mLast = temp + offset;
 	mTail = temp + s;
+}
+
+void ConstantPool::clear()
+{
+	mLast = mData;
+}
+
+void ConstantPool::reset(int val)
+{
+	clear();
+	memset(mData, val, mTail - mData);
 }

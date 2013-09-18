@@ -11,6 +11,7 @@ namespace TT
 		TT_ERROR,
 
 		TT_OPERATOR,
+		TT_DELIMITER,
 		TT_ASSGIN,
 
 		TT_INTEGER,

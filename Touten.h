@@ -9,6 +9,7 @@
 #include "TTParser.h"
 #include "TTStackBasedAssembler.h"
 #include "TTStackBasedInterpreter.h"
+#include "TTCPPFunctionTable.h"
 
 namespace TT
 {
@@ -16,6 +17,11 @@ namespace TT
 	{
 	public :
 		bool loadFile(const String& name);
+
+		void registerFunction(const String& name, TT_Function func);
+	private:
+		ScopeManager mScopemgr;
+		CPPFunctionTable mFuncTable;
 	};
 }
 

@@ -36,7 +36,7 @@ namespace TT
 		ASTNode::Ptr parseStat(ParserInput* input);
 		ASTNode::Ptr parseLoop(ParserInput* input);
 		ASTNode::Ptr parseCond(ParserInput* input);
-		ASTNode::Ptr parseVar(ParserInput* input, bool left, void** nameptr = 0);
+		ASTNode::Ptr parseVar(ParserInput* input);
 		ASTNode::Ptr parseAssgin(ParserInput* input, ASTNode::Ptr pre = 0);
 		ASTNode::Ptr parseUnop(ParserInput* input);
 		ASTNode::Ptr parseFuncCall(ParserInput* input, ASTNode::Ptr pre = 0);
@@ -55,6 +55,7 @@ namespace TT
 
 		//只检测一个字符的操作符
 		bool checkOperator(const Token& t,  Char c);
+		bool checkDelimiter(const Token& t, Char c);
 		void copyString(Char* d, const Char* s, size_t count);
 	};
 }

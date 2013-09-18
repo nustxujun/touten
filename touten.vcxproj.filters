@@ -75,6 +75,15 @@
     <ClInclude Include="TTInterpreterCommon.h">
       <Filter>头文件</Filter>
     </ClInclude>
+    <ClInclude Include="TTMemoryAllocator.h">
+      <Filter>头文件</Filter>
+    </ClInclude>
+    <ClInclude Include="TTObject.h">
+      <Filter>头文件</Filter>
+    </ClInclude>
+    <ClInclude Include="TTCPPFuntionTable.h">
+      <Filter>头文件</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="stdafx.cpp">
@@ -111,6 +120,15 @@
       <Filter>源文件</Filter>
     </ClCompile>
     <ClCompile Include="TTInterpreterCommon.cpp">
+      <Filter>源文件</Filter>
+    </ClCompile>
+    <ClCompile Include="TTMemoryAllocator.cpp">
+      <Filter>源文件</Filter>
+    </ClCompile>
+    <ClCompile Include="TTObject.cpp">
+      <Filter>源文件</Filter>
+    </ClCompile>
+    <ClCompile Include="TT_CPPFuntionTable.cpp">
       <Filter>源文件</Filter>
     </ClCompile>
   </ItemGroup>

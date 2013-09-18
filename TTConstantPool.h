@@ -29,8 +29,10 @@ namespace TT
 		size_t size()const;
 		const void* data()const;
 
-	private:
 		void reserve(size_t size);
+		void clear();
+
+		void reset(int val);
 
 	private:
 		char* mData;
