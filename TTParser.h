@@ -28,10 +28,10 @@ namespace TT
 
 	private:
 		ASTNode::Ptr parseFile(ParserInput* input);
-		ASTNode::Ptr parseDef(ParserInput* input, TokenType keyword);
-		ASTNode::Ptr parseVarlist(ParserInput* input, TokenType type );
-		ASTNode::Ptr parseField(ParserInput* input, TokenType type );
-		ASTNode::Ptr parseFunction(ParserInput* input, TokenType type );
+		ASTNode::Ptr parseDef(ParserInput* input, AccessType at);
+		ASTNode::Ptr parseVarlist(ParserInput* input, AccessType at );
+		ASTNode::Ptr parseField(ParserInput* input, AccessType at );
+		ASTNode::Ptr parseFunction(ParserInput* input, AccessType at );
 		ASTNode::Ptr parseBlock(ParserInput* input);
 		ASTNode::Ptr parseStat(ParserInput* input);
 		ASTNode::Ptr parseLoop(ParserInput* input);

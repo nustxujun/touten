@@ -9,12 +9,17 @@ namespace TT
 	{
 		//var
 		LOAD,
+		LOAD_SHARED,
+		LOAD_GLOBAL,
+		LOAD_LOCAL,
+		LOAD_FLLOCAL,
 		LOAD_CONST,
 		LOAD_CPP_FUNC,
-		LOAD_PARENT,
+
 		STORE,
 		STORE_ARRAY,
 		ADDR,
+		CACHE,
 
 		//func
 		CALL,
@@ -24,6 +29,10 @@ namespace TT
 		RETURN,
 		RETURN_ARRAY,
 
+		//
+		TEST,
+		JMP,
+		JZ,		//jump if zero
 
 		//binop
 		BINOP_BEG,

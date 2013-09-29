@@ -5,13 +5,14 @@
 #include "TTConstantPool.h"
 #include "TTObject.h"
 #include "TTCPPFunctionTable.h"
+#include "TTEnvironment.h"
 #include <stack>
 
 namespace TT
 {
 	struct CallFrame
 	{
-		ObjectVector vars;
+		std::vector<Object*> vars;
 		size_t beginPos;
 		size_t reserveOpr;
 	};
@@ -46,8 +47,6 @@ namespace TT
 
 		CallFrame& pushCallFrame(size_t codepos, size_t resopr);
 		size_t popCallFrame();
-		template<class Type>
-		Type cast(Object& o);
 
 		void compareOpt(Object* o1, Object* o2, Instruction instr, Object* o);
 		void normalOpt(Object* o1, Object* o2, Instruction instr, Object* o);
@@ -61,10 +60,11 @@ namespace TT
 		typedef std::stack<Object*> OperandStack;
 		OperandStack mOprStack;
 
-		ObjectStack mTempObj;
+		ObjectSet mTempObj;
 
 		CallStack mCallStack;
-
+		SharedEnv mGlobalEnv;
+		Caster mCaster;
 	};
 
 

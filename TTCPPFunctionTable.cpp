@@ -95,11 +95,5 @@ void CPPFunctionTable::grow()
 
 bool CPPFunctionTable::comp(const Char* s1, const Char* s2)const
 {
-	while(*s1 != 0 && *s2 != 0)
-	{
-		if (*s1 < *s2) return true;
-		if (*s2 < *s1) return false;
-		++s1; ++s2;
-	}
-	return *s1 < *s2;
+	return compareString(s1, s2);
 }

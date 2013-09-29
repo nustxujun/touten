@@ -52,6 +52,7 @@ namespace TT
 		AT_DEFAULT,
 		AT_GLOBAL,
 		AT_SHARED,
+		AT_FILE,
 		AT_LOCAL,
 	};
 

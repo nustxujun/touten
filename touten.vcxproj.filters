@@ -81,7 +81,10 @@
     <ClInclude Include="TTObject.h">
       <Filter>头文件</Filter>
     </ClInclude>
-    <ClInclude Include="TTCPPFuntionTable.h">
+    <ClInclude Include="TTCPPFunctionTable.h">
+      <Filter>头文件</Filter>
+    </ClInclude>
+    <ClInclude Include="TTEnvironment.h">
       <Filter>头文件</Filter>
     </ClInclude>
   </ItemGroup>
@@ -128,7 +131,10 @@
     <ClCompile Include="TTObject.cpp">
       <Filter>源文件</Filter>
     </ClCompile>
-    <ClCompile Include="TT_CPPFuntionTable.cpp">
+    <ClCompile Include="TTCPPFunctionTable.cpp">
+      <Filter>源文件</Filter>
+    </ClCompile>
+    <ClCompile Include="TTEnvironment.cpp">
       <Filter>源文件</Filter>
     </ClCompile>
   </ItemGroup>

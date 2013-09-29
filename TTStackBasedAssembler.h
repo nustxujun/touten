@@ -66,7 +66,8 @@ namespace TT
 		Scope::Ptr enterScope(const Char* name = 0);
 		Scope::Ptr leaveScope();
 
-		void clearParas();
+		size_t stringToConstPool(const Char* str);
+
 	private:
 		ScopeManager& mScopeMgr;
 		Codes& mCodes;
@@ -78,8 +79,8 @@ namespace TT
 		String		mCurName;
 		Scope::Ptr	mCurScope;
 		Symbol*		mCurSymbol;
-		size_t		mCurConst;
 		bool		mIsFuncall;
+		std::map<String, int> mCurSymMap;
 
 		typedef TTMap<Symbol*, std::vector<size_t>> BackFill;
 		BackFill mBackFill;

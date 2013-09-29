@@ -85,11 +85,11 @@ bool CallStack::empty()const
 StackBasedInterpreter::StackBasedInterpreter(const Codes& c, const ConstantPool& cp, const CPPFunctionTable& ft):
 	mCodes(c), mConstPool(cp), mFuncTable(ft)
 {
-	mTempObj.reserve(32);
 }
 
 void StackBasedInterpreter::execute(size_t offset)
 {
+	SharedEnv curenv = TT_NEW(Environment(0));
 	Object* begfunc = (Object*)mConstPool[offset];
 
 	pushCallFrame(0, 0);
@@ -109,7 +109,7 @@ void StackBasedInterpreter::execute(size_t offset)
 		return o;
 	};
 
-	Caster caster;
+	
 	while (true)
 	{
 		Instruction instr = (Instruction)*current++;
@@ -118,6 +118,24 @@ void StackBasedInterpreter::execute(size_t offset)
 		case LOAD:
 			{
 				pushOpr(mCallStack.top().vars[getopr()]);
+			}
+			break;
+		case LOAD_SHARED:
+		case LOAD_GLOBAL:
+		case LOAD_LOCAL:
+			{
+				SharedEnv env = curenv;
+				switch (instr)
+				{
+				case LOAD_SHARED: env = curenv->getParent();break;
+				case LOAD_GLOBAL: env = mGlobalEnv;break;
+				}
+				Object* name = getArg(0);
+				Object* obj = curenv->operator[](name->val.cstr.cont);
+				size_t pos = getopr();
+				mCallStack.top().vars[pos] = obj;
+				popOpr();
+				pushOpr(obj);
 			}
 			break;
 		case LOAD_CONST:
@@ -143,10 +161,10 @@ void StackBasedInterpreter::execute(size_t offset)
 			{
 				Operand opr = getopr();
 				Object* arr = getArg(opr);
-				caster.cast(*arr, OT_ARRAY);
+				mCaster.cast(*arr, OT_ARRAY);
 				for (size_t i = 0; i < opr; ++i)
 				{
-					*getArg(0) = arr->val.arr->get(opr - i - 1);
+					*getArg(0) = *arr->val.arr->get(opr - i - 1);
 					popOpr();
 				}
 				popOpr();//pop ret;
@@ -162,17 +180,28 @@ void StackBasedInterpreter::execute(size_t offset)
 				}
 				else
 				{
-					caster.cast(*obj, OT_ARRAY);
+					mCaster.cast(*obj, OT_ARRAY);
 					Object* elem ;
 					if (index->type == OT_STRING)
-						elem = &(*obj->val.arr)[index->val.str.cont];
+						elem = (*obj->val.arr)[index->val.str.cont];
+					else if (index->type == OT_CONST_STRING)
+						elem = (*obj->val.arr)[index->val.cstr.cont];
 					else
-						elem = &(*obj->val.arr)[index->val.i];
+						elem = (*obj->val.arr)[index->val.i];
 
 					popOpr();
 					popOpr();
 					pushOpr(elem);
 				}
+			}
+			break;
+		case CACHE:
+			{
+				Object* name = getArg(0);
+				size_t pos = getopr();
+				Object* obj = curenv->operator[](name->val.cstr.cont);
+				mCallStack.top().vars[pos] = obj;
+				popOpr();
 			}
 			break;
 		case CALL:
@@ -189,7 +218,9 @@ void StackBasedInterpreter::execute(size_t offset)
 				for ( ; i >=0 ; --i)
 				{
 					if (i < paraCount)
+					{
 						*frame.vars[i] = *mOprStack.top();
+					}
 					popOpr();
 				}
 			}
@@ -202,17 +233,21 @@ void StackBasedInterpreter::execute(size_t offset)
 				TT_Function call = (TT_Function)func->val.func.codeAddr;
 				popOpr();
 				//
-				CallFrame& frame = pushCallFrame(current - begin, mOprStack.size() - argsnum);
-				int i = argsnum - 1;
-				for ( ; i >=0 ; --i)
-				{
-					*frame.vars[i] = *mOprStack.top();
-					popOpr();
-				}			
+				//CallFrame& frame = pushCallFrame(current - begin, mOprStack.size() - argsnum);
+				//int i = argsnum - 1;
+				std::vector<Object*> paras;
+				paras.reserve(4);
+				auto i = mOprStack._Get_container().begin() + (mOprStack.size() - argsnum);
+				auto endi = mOprStack._Get_container().end();
+				for ( ;i != endi; ++i)
+					paras.push_back( *i);
 
-				Object* callret = pushOpr();
-				int ret = call(argsnum, frame.vars.begin() , callret);
-				popCallFrame();
+				Object* callret = mTempObj.add();
+				int ret = call( paras , 0);
+				for (int i = 0; i < argsnum; ++i)
+					popOpr();
+
+				pushOpr(callret);
 			}
 			break;
 		case RETURN:
@@ -225,6 +260,27 @@ void StackBasedInterpreter::execute(size_t offset)
 		case RETURN_ARRAY:
 			{
 				assert(0);
+			}
+			break;
+		case TEST:
+			{
+				
+			}
+			break;
+		case JZ:
+			{
+				size_t jumpos = getopr();
+				Object* obj = getArg(0);
+				if (!mCaster.castToBool(*obj))
+					current = begin + jumpos;
+				popOpr();
+
+			}
+			break;
+		case JMP:
+			{
+				size_t jumpos = getopr();
+				current = begin + jumpos;
 			}
 			break;
 			//binop
@@ -246,11 +302,7 @@ void StackBasedInterpreter::popOpr()
 	Object* obj = mOprStack.top();
 	mOprStack.pop();
 
-	CallFrame& cf = mCallStack.top();
-	if (mTempObj.top() == obj)
-	{
-		mTempObj.pop();
-	}
+	mTempObj.erase(obj);
 }
 
 Object* StackBasedInterpreter::pushOpr(Object* obj)
@@ -258,7 +310,7 @@ Object* StackBasedInterpreter::pushOpr(Object* obj)
 	CallFrame& cf = mCallStack.top();
 	if (!obj) 
 	{
-		obj = mTempObj.push();
+		obj = mTempObj.add();
 	}
 	mOprStack.push(obj);
 	return obj;
@@ -299,7 +351,7 @@ size_t StackBasedInterpreter::popCallFrame()
 		Array* arr = TT_NEW(Array)(false);
 		for (size_t i = cf.reserveOpr; i < oprcount; ++i)
 		{
-			(*arr)[i - cf.reserveOpr] = *mOprStack.top();
+			*(*arr)[i - cf.reserveOpr] = *mOprStack.top();
 			popOpr();
 		}
 		
@@ -318,8 +370,8 @@ void StackBasedInterpreter::boolOpt(Object* o1, Object* o2, Instruction instr, O
 	bool ret = false;
 	switch (instr)
 	{
-	case DAND:	ret = cast<int>(*o1) && cast<int>(*o2); break;
-	case DOR:	ret = cast<int>(*o1) || cast<int>(*o2); break;
+	case DAND:	ret = mCaster.castToInt(*o1) && mCaster.castToInt(*o2); break;
+	case DOR:	ret = mCaster.castToInt(*o1) || mCaster.castToInt(*o2); break;
 	}
 
 	o->type = ret ? OT_TRUE: OT_FALSE;
@@ -328,7 +380,7 @@ void StackBasedInterpreter::boolOpt(Object* o1, Object* o2, Instruction instr, O
 
 void StackBasedInterpreter::autoOpt(Object* o1, Object* o2, Instruction instr)
 {
-	Object* o = mTempObj.push();
+	Object* o = mTempObj.add();
 
 	switch (instr)
 	{
@@ -356,7 +408,7 @@ void StackBasedInterpreter::autoOpt(Object* o1, Object* o2, Instruction instr)
 	case XOR:
 		{
 			o->type = OT_INTEGER;
-			INT_OPT(cast<int>(*o1), cast<int>(*o2), instr, o->val.i);
+			INT_OPT(mCaster.castToInt(*o1), mCaster.castToInt(*o2), instr, o->val.i);
 		}
 	}
 
@@ -385,11 +437,11 @@ void StackBasedInterpreter::compareOpt(Object* o1, Object* o2, Instruction instr
 	}
 	else if (type[OT_DOUBLE])
 	{
-		CMP_OPT(cast<double>(*o1), cast<double>(*o2), instr, ret);
+		CMP_OPT(mCaster.castToReal(*o1), mCaster.castToReal(*o2), instr, ret);
 	}
 	else if (type[OT_INTEGER] || type[OT_TRUE] || type[OT_FALSE])
 	{
-		CMP_OPT(cast<int>(*o1), cast<int>(*o2), instr, ret);
+		CMP_OPT(mCaster.castToInt(*o1), mCaster.castToInt(*o2), instr, ret);
 	}
 	else
 	{
@@ -417,40 +469,16 @@ void StackBasedInterpreter::normalOpt(Object* o1, Object* o2, Instruction instr,
 	else if (type[OT_DOUBLE])
 	{
 		o->type = OT_DOUBLE;
-		BASE_OPT(cast<double>(*o1), cast<double>(*o2), instr, o->val.d);
+		BASE_OPT(mCaster.castToReal(*o1), mCaster.castToReal(*o2), instr, o->val.d);
 	}
 	else if (type[OT_INTEGER] || type[OT_TRUE] || type[OT_FALSE])
 	{
 		o->type = OT_INTEGER;
-		BASE_OPT(cast<int>(*o1), cast<int>(*o2), instr, o->val.i);
+		BASE_OPT(mCaster.castToInt(*o1), mCaster.castToInt(*o2), instr, o->val.i);
 	}
 	else
 	{
 		assert(0);
 	}
 
-}
-
-
-
-
-template<class Type>
-Type StackBasedInterpreter::cast(Object& o)
-{
-	switch(o.type)
-	{
-	case OT_STRING:
-		return ((TTString)o.val.str);
-	case OT_DOUBLE:
-		return (Type)o.val.d;
-	case OT_INTEGER:
-		return (Type)o.val.i;
-	case OT_TRUE:
-		return (Type)1;
-	case OT_FALSE:
-		return (Type)0;
-	default:
-		TTINTERPRETER_EXCEPT("cant cast");
-		return 0;
-	}
 }

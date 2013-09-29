@@ -9,6 +9,8 @@
 #include "TTMemoryAllocator.h"
 
 
+//#define MEM_DEBUG
+
 size_t memsize = 0;
 
 void* alloc(void* optr, size_t nsize)
@@ -17,8 +19,9 @@ void* alloc(void* optr, size_t nsize)
 	{
 		int* s = (int*)optr - 1;
 		memsize -= *s;
+#ifdef MEM_DEBUG
 		printf("total:%10d, current:- %d\n", memsize, *s);
-
+#endif
 		::free(s);
 	}
 	else
@@ -28,28 +31,33 @@ void* alloc(void* optr, size_t nsize)
 		{
 			s = (int*)optr - 1;
 			memsize -= *s;
+#ifdef MEM_DEBUG
 			printf("total:%10d, current:- %d\n", memsize, *s);
+#endif
 		}
 		s = (int*)::realloc(s, nsize + 4);
 		*s = nsize;
 		optr = s + 1;
 		memsize += nsize;
-
+#ifdef MEM_DEBUG
 		printf("total:%10d, current:+ %d\n", memsize, *s);
+#endif
 	}
 	return optr ;
 }
 
-int print(int num, TT::Object* obj, TT::Object* ret)
+int print(const std::vector<TT::Object*>& para, TT::Object* ret)
 {
 	TT::Caster caster;
-	for (int i = 0; i < num; ++i)
-		wprintf(L"%s ", caster.castToString(*(obj + i)));
+	auto endi = para.end();
+	for (auto i = para.begin(); i != endi ; ++i)
+		wprintf(L"%s", caster.castToString(**i)->data);
 	return 1;
 }
 
 int _tmain(int argc, _TCHAR* argv[])
 {
+	size_t size = sizeof(TT::Object);
 	TT::MemoryAllocator::setupMethod(alloc);
 
 	{
@@ -60,6 +68,7 @@ int _tmain(int argc, _TCHAR* argv[])
 	}
 
 	assert(memsize == 0);
+	getchar();
 	return 0;
 }
 
@@ -130,7 +139,7 @@ bool Touten::loadFile(const String& name)
 
 void Touten::registerFunction(const String& name, TT_Function func)
 {
-	Symbol* sym = mScopemgr.getGlobal()->createSymbol(name, ST_CPP_FUNC, AT_GLOBAL);
+	Symbol* sym = mScopemgr.getGlobal()->createSymbol(name, ST_CPP_FUNC);
 	sym->addrOffset = mFuncTable.insert(name.c_str(), func);
 	mFuncTable[sym->addrOffset]->val.func.codeAddr = (size_t)func;
 }

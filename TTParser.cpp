@@ -22,15 +22,13 @@ ASTNode::Ptr Parser::parseFile(ParserInput* input)
 
 	while(true)
 	{
-		TokenType tt = TT_LOCAL;
+		AccessType at = AT_FILE;
 		switch ( input->lookahead().type)
 		{
-		case TT_GLOBAL:
-		case TT_LOCAL:
-			tt = input->next().type;
-			break;
+		case TT_GLOBAL:	at = AT_GLOBAL; break;
+		case TT_LOCAL: at = AT_FILE; break;
 		}
-		ASTNode::Ptr o = parseDef(input, tt);
+		ASTNode::Ptr o = parseDef(input, at);
 		if (o.isNull()) return f;
 		last = last->setAndNext(o);
 
@@ -41,18 +39,18 @@ ASTNode::Ptr Parser::parseFile(ParserInput* input)
 	return f;
 }
 
-ASTNode::Ptr Parser::parseDef(ParserInput* input, TokenType keyword)
+ASTNode::Ptr Parser::parseDef(ParserInput* input, AccessType at)
 {
 	switch (input->lookahead().type)
 	{
 	case TT_FUNCTION:
-		return parseFunction(input, keyword);
+		return parseFunction(input, at);
 		break;
 	case TT_FIELD:
-		return parseField(input, keyword);
+		return parseField(input, at);
 		break;
 	case TT_NAME:
-		return parseVarlist(input, keyword);
+		return parseVarlist(input, at);
 		break;
 	case TT_EOS:
 		return 0;
@@ -62,7 +60,7 @@ ASTNode::Ptr Parser::parseDef(ParserInput* input, TokenType keyword)
 	return 0;
 }
 
-ASTNode::Ptr Parser::parseVarlist(ParserInput* input, TokenType type)
+ASTNode::Ptr Parser::parseVarlist(ParserInput* input, AccessType at)
 {
 	Token t;
 	VarListNode* vln = new VarListNode();
@@ -81,21 +79,15 @@ ASTNode::Ptr Parser::parseVarlist(ParserInput* input, TokenType type)
 		}
 
 		NameNode* nn = new NameNode();
-		switch (type)
-		{
-		case TT_GLOBAL: nn->type = AT_GLOBAL; break;
-		case TT_SHARED: nn->type = AT_SHARED; break;
-		case TT_LOCAL: nn->type = AT_LOCAL; break;
-		}
+
 		copyString(nn->name, t.string,  t.size);
 
 
 		t = input->lookahead();
 		if (t.type  == TT_ASSGIN)
 		{
-			input->next();
-
 			VarNode* vn = new VarNode;
+			vn->type = at;
 			vn->var = nn;
 
 			ASTNode::Ptr a = parseAssgin(input, vn);
@@ -114,23 +106,14 @@ ASTNode::Ptr Parser::parseVarlist(ParserInput* input, TokenType type)
 	return vl;
 }
 
-ASTNode::Ptr Parser::parseFunction(ParserInput* input, TokenType type)
+ASTNode::Ptr Parser::parseFunction(ParserInput* input, AccessType at)
 {
 	Token t = input->next();
 	FunctionNode* fn = new FunctionNode();
 	ASTNode::Ptr f = fn;
 	fn->name[0] = 0;//anonymous
-	switch (type)
-	{
-	case TT_GLOBAL:
-		fn->acctype = AT_GLOBAL;
-		break;
-	case TT_LOCAL:
-		fn->acctype = AT_LOCAL;
-	default:
-		fn->acctype = AT_DEFAULT;
-	}
-	
+	fn->acctype = at;
+
 	t = input->next();
 	if (t.type == TT_NAME)
 	{
@@ -159,7 +142,6 @@ ASTNode::Ptr Parser::parseFunction(ParserInput* input, TokenType type)
 			}
 
 			NameNode* nn = new NameNode;
-			nn->type = AT_LOCAL;
 			copyString(nn->name, t.string,  t.size);
 
 			last = last->setAndNext(nn);
@@ -193,23 +175,14 @@ ASTNode::Ptr Parser::parseFunction(ParserInput* input, TokenType type)
 	return f;
 }
 
-ASTNode::Ptr Parser::parseField(ParserInput* input, TokenType type)
+ASTNode::Ptr Parser::parseField(ParserInput* input, AccessType at)
 {
 	Token t = input->next();
 	FieldNode* fn = new FieldNode();
 	ASTNode::Ptr f = fn;
 	*fn->name = 0;//anonymous
-	switch (type)
-	{
-	case TT_GLOBAL:
-		fn->acctype = AT_GLOBAL;
-		break;
-	case TT_LOCAL:
-		fn->acctype = AT_LOCAL;
-	default:
-		fn->acctype = AT_DEFAULT;
-	}
-	
+	fn->acctype = at;
+
 	if (t.type == TT_FIELD)
 	{
 		t = input->next();
@@ -279,9 +252,13 @@ ASTNode::Ptr Parser::parseStat(ParserInput* input)
 	case TT_SWITCH:
 		return parseCond(input);
 		break;
-	case TT_SHARED: case TT_LOCAL: //definition
-		return parseDef(input, input->next().type );
-		break;
+	case TT_SHARED: 
+		return parseDef(input, AT_SHARED ); break;
+	case TT_LOCAL: //definition
+		return parseDef(input, AT_LOCAL); break;
+	case TT_PRE_GL: 
+	case TT_PRE_SA:
+	case TT_PRE_FL:
 	case TT_NAME://assgin funcall
 		{
 			ASTNode::Ptr var = parseVar(input);
@@ -297,7 +274,7 @@ ASTNode::Ptr Parser::parseStat(ParserInput* input)
 	case TT_DELIMITER://field
 		{		
 			if (checkDelimiter(t, '{'))
-				return parseField(input, TT_LOCAL);
+				return parseField(input, AT_LOCAL);
 			if (checkDelimiter(t, '['))
 				return parseAssgin(input);
 			else if ( checkDelimiter(t,'}'))
@@ -335,11 +312,19 @@ ASTNode::Ptr Parser::parseStat(ParserInput* input)
 ASTNode::Ptr Parser::parseVar(ParserInput* input)
 {
 	Token name = input->next();
+	AccessType at = AT_LOCAL;
+	switch (name.type)
+	{
+	case TT_PRE_GL: at = AT_GLOBAL; name = input->next(); break;
+	case TT_PRE_SA: at = AT_SHARED; name = input->next(); break;
+	case TT_PRE_FL: at = AT_FILE;	name = input->next(); break;
+
+	}
 	NameNode* nn = new NameNode;
 	copyString(nn->name,name.string,name.size);
-	nn->type = AT_LOCAL;
 
 	VarNode* vn = new VarNode;
+	vn->type = AT_LOCAL;
 	vn->var = nn;
 	ASTNodeList::Ptr last = (vn->indexs = new ASTNodeList);
 	ASTNode::Ptr v = vn;
@@ -421,13 +406,16 @@ ASTNode::Ptr Parser::parseExpr(ParserInput* input,  BinopStack* stack)
 			expr = cn;
 		}
 		break;
+	case TT_PRE_GL:
+	case TT_PRE_SA:
+	case TT_PRE_FL:
 	case TT_NAME://var funcall 
 		{
 			expr = parseAccessSymbol(input);
 		}
 		break;
-	case TT_FUNCTION:
-		expr = parseFunction(input, TT_LOCAL);
+	case TT_FUNCTION://函数内暂时只能定义匿名函数
+		expr = parseFunction(input, AT_LOCAL);
 		break;
 	case TT_DELIMITER:
 		{
@@ -442,7 +430,7 @@ ASTNode::Ptr Parser::parseExpr(ParserInput* input,  BinopStack* stack)
 				}
 			}
 			else if (checkDelimiter(look, '{'))
-				expr = parseField(input, TT_LOCAL);
+				expr = parseField(input, AT_LOCAL);
 			
 			TTPARSER_EXCEPT("unexpected token");
 			return 0;

@@ -35,7 +35,7 @@ namespace TT
 
 #define TT_DELETE(T, ptr) {ptr->~T(); TT_FREE(ptr);}
 
-#define TT_DELETE_ARRAY(T,ptr, count) {T* tmp = ptr; for (size_t i = 0; i < count; ++i, ++tmp) tmp->~T(); TT_FREE(ptr);}
+#define TT_DELETE_ARRAY(T,ptr, count) {T* tmp = ptr; for (int i = 0; i < count; ++i, ++tmp) tmp->~T(); TT_FREE(ptr);}
 
 
 

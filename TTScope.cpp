@@ -26,9 +26,9 @@ Scope::SymbolObj Scope::getSymbol(const String& name)
 	return obj;
 }
 
-Symbol* Scope::createSymbol(const String& name, SymbolType st, AccessType at)
+Symbol* Scope::createSymbol(const String& name, SymbolType st)
 {
-	return mSymbols.createSymbol(name, st, at);
+	return mSymbols.createSymbol(name, st);
 }
 
 const String ScopeManager::anonymous_scope = L"__anonymous_scope";

@@ -40,7 +40,6 @@ namespace TT
 	{
 		ASTNODE_VISIT_FUNC_DEC;
 	public :
-		AccessType type;		
 		Char name[MAX_VAR_NAME_LEN];
 
 	};
@@ -51,7 +50,8 @@ namespace TT
 	public :
 		ASTNode::Ptr var;		
 		ASTNodeList::Ptr indexs;//可以是下标可以是map的key
-				
+	
+		AccessType type;
 	};
 
 	class AssginNode: public ASTNode

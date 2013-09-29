@@ -64,7 +64,7 @@ loop ::= while '(' exp ')' '{' block '}' |
 cond ::= if '(' exp ')' (exp | '{' block '}') {elseif '(' exp ')' (exp | '{' block '}')} [else (exp | '{' block '}')]
 
 
-var ::= name  {('[' exp ']')  | ('.' string }    ///a.b 作为 a['b']的语法糖存在，动态语言似乎很难实现真正的成员
+var ::= ['$' | '@'] name  {('[' exp ']')  | ('.' string }    ///a.b 作为 a['b']的语法糖存在，动态语言似乎很难实现真正的成员
 
 
 accessSymbol ::=  var | funcall  //单独为exp文法考虑的

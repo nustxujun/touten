@@ -19,7 +19,7 @@ namespace TT
 	class Symbol
 	{
 	public:
-		AccessType actype;
+		//AccessType actype;
 		SymbolType symtype;
 		size_t addrOffset;
 
@@ -30,7 +30,7 @@ namespace TT
 	{
 	public :
 		~SymbolMap();
-		Symbol* createSymbol(const String& name, SymbolType st, AccessType at);
+		Symbol* createSymbol(const String& name, SymbolType st);
 		Symbol* getSymbol(const String& name);
 
 	private:

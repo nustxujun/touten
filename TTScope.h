@@ -21,7 +21,7 @@ namespace TT
 		Scope::Ptr getParent()const;
 
 		SymbolObj getSymbol(const String& name);
-		Symbol* createSymbol(const String& name, SymbolType st, AccessType at);
+		Symbol* createSymbol(const String& name, SymbolType st);
 	private:
 		SymbolMap mSymbols;
 		Scope::Ptr mParent;
