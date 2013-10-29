@@ -10,8 +10,6 @@ namespace TT
 {
 	class StackBasedAssembler: public ASTNodeVisitor
 	{
-
-
 	public:
 		StackBasedAssembler(Codes& c, 
 			ScopeManager& sm, ConstantPool& cp);
@@ -50,9 +48,9 @@ namespace TT
 
 		size_t addCode(const void* b, size_t s)
 		{
-			size_t head = mInstruction;
+			size_t head = mCodes.size();
 			const char* code = (const char*)b;
-			for (size_t i = 0; i < s; ++i, ++mInstruction)
+			for (size_t i = 0; i < s; ++i)
 				mCodes.push_back(*code++);
 			return head;			
 		}
@@ -73,14 +71,13 @@ namespace TT
 		Codes& mCodes;
 		ConstantPool& mConstPool;
 
-		size_t mInstruction;
 		//current parameters;
 
 		String		mCurName;
 		Scope::Ptr	mCurScope;
 		Symbol*		mCurSymbol;
 		bool		mIsFuncall;
-		std::map<String, int> mCurSymMap;
+		bool		mIsLeft;
 
 		typedef TTMap<Symbol*, std::vector<size_t>> BackFill;
 		BackFill mBackFill;

@@ -18,13 +18,6 @@ TTString::TTString(const StringValue& sv)
 	memcpy(data, sv.cont, numChar* sizeof(Char));
 }
 
-TTString::TTString(const ConstString& cs)
-{
-	numChar = cs.size ;
-	data = (Char*)TT_MALLOC(numChar * sizeof(Char));
-	memcpy(data, cs.cont, numChar* sizeof(Char));
-}
-
 TTString::TTString(const Char* str)
 {
 	size_t len = 1;
@@ -102,10 +95,54 @@ TTString::operator const Char*()const
 }
 
 
-Object::Object():type(OT_NULL), isConst(false)
+Object::Object():type(OT_NULL)
 {
 
 }
+
+Object::Object(const Object& obj):
+	type(OT_NULL)
+{
+	*this = obj;
+}
+
+Object::Object(bool v):
+	type( v? OT_TRUE: OT_FALSE)
+{
+}
+
+Object::Object(int v):
+	type(OT_INTEGER) 
+{
+	val.i = v;
+}
+
+Object::Object(double v):
+	type(OT_DOUBLE)
+{
+	val.d = v;
+}
+
+Object::Object(const Char* str, size_t size):
+	type(OT_STRING)
+{
+	val.str.cont = (Char*)TT_MALLOC(size * sizeof(Char));
+	val.str.size = size;
+	memcpy(val.str.cont, str, sizeof(Char) * size);
+}
+
+Object::Object(FunctionValue v):
+	type(OT_FUNCTION)
+{
+	val.func = v;
+}
+
+void Object::swap(Object& obj)
+{
+	std::swap(val, obj.val);
+	std::swap(type, obj.type);
+}
+
 
 Object::~Object()
 {
@@ -139,15 +176,6 @@ Object& Object::operator=(const Object& obj)
 			memcpy(val.str.cont, obj.val.str.cont, sizeof(Char) * obj.val.str.size);
 		}
 		break;
-	case OT_CONST_STRING:
-		{
-			val.str.cont = (Char*)TT_MALLOC(obj.val.cstr.size * sizeof(Char));
-			val.str.size = obj.val.cstr.size;	
-			memcpy(val.str.cont, obj.val.cstr.cont, sizeof(Char) * obj.val.cstr.size);
-			type = OT_STRING;
-			return *this;
-		}
-		break;
 	default:
 		val = obj.val;
 		break;
@@ -155,6 +183,59 @@ Object& Object::operator=(const Object& obj)
 
 	type = obj.type;
 	return *this;
+}
+
+ObjectPtr::ObjectPtr(Object* obj ):
+	mInst(obj), mAutoDel(false), mCount(0)
+{
+	if (!obj)
+	{
+		mInst = TT_NEW(Object)();
+		mAutoDel = true;
+		mCount = TT_NEW(size_t)(1);
+	}
+}
+	
+ObjectPtr::ObjectPtr(const Object& obj)
+{
+	mAutoDel = true;
+	mInst = TT_NEW(Object)();
+	*mInst = obj;
+	mCount = TT_NEW(size_t)(1);
+}
+
+ObjectPtr::ObjectPtr(const ObjectPtr& obj)
+{
+	mAutoDel = obj.mAutoDel;
+	mInst = obj.mInst;
+	mCount = obj.mCount;
+	if (obj.mAutoDel)
+		++(*mCount);
+}
+
+Object& ObjectPtr::operator*() const
+{
+	return *mInst;
+}
+
+Object* ObjectPtr::operator->()const
+{
+	return mInst;
+}
+
+
+ObjectPtr::~ObjectPtr()
+{
+	if (mAutoDel )
+	{
+		if (*mCount == 1)
+		{
+			TT_DELETE(Object, mInst);
+			TT_FREE(mCount);
+		}
+		else 
+			--(*mCount);
+	}
 }
 
 Array::Array(bool hash, size_t cap)
@@ -197,7 +278,7 @@ Object* Array::operator[](const Char* key)
 	if (!mHash) convertToHashMap();
 
 	size_t hashval = hash(key);
-	Elem* elem = &mHead[hashval % (mTail - mHead)];
+	Elem* elem = mHead + (hashval % (mTail - mHead));
 	Elem* head = elem;
 	while(elem->key != 0 )
 	{
@@ -261,7 +342,7 @@ Object* Array::get(const Char* key) const
 			return &elem->obj;
 	}	
 	
-	return &elem->obj;
+	return 0;
 }
 
 Array& Array::operator=(const Array& arr)
@@ -486,7 +567,6 @@ bool ObjectSet::empty()const
 
 void Caster::cast(Object& o, ObjectType otype)
 {
-	assert(o.isConst == false);
 	switch (otype)
 	{
 	case OT_NULL:
@@ -554,9 +634,6 @@ void Caster::castToStringObject(Object& o)
 	case OT_INTEGER:
 		str = TT_NEW(TTString)(o.val.i);
 		break;
-	case OT_CONST_STRING:
-		str = TT_NEW(TTString)(o.val.cstr);
-		break;
 	case OT_FUNCTION:
 	case OT_FIELD:
 	case OT_ARRAY:
@@ -590,9 +667,6 @@ void Caster::castToRealObject(Object& o)
 	case OT_STRING:
 		o.val.d = *((TTString*)&o.val.str);
 		break;
-	case OT_CONST_STRING:
-		o.val.d = *((TTString*)&o.val.cstr);
-		break;
 	default:
 		o.~Object();
 		o.type = OT_NULL;
@@ -618,9 +692,6 @@ void Caster::castToIntObject(Object& o)
 		break;
 	case OT_STRING:
 		o.val.i = *((TTString*)&o.val.str);
-		break;
-	case OT_CONST_STRING:
-		o.val.i = *((TTString*)&o.val.cstr);
 		break;
 	default:
 		o.~Object();
@@ -676,9 +747,6 @@ SharedPtr<TTString> Caster::castToString(const Object& o)
 	case OT_STRING:
 		str = new TTString(o.val.str);
 		break;
-	case OT_CONST_STRING:
-		str = new TTString(o.val.cstr);
-		break;
 	case OT_TRUE:
 		str = new TTString (L"true");
 		break;
@@ -712,13 +780,6 @@ Type Caster::cast(const Object& o)
 	{
 	case OT_STRING:
 		return *((TTString*)&o.val.str);
-	case OT_CONST_STRING:
-		{
-			StringValue sv;
-			sv.cont = (Char*)o.val.cstr.cont;
-			sv.size = o.val.cstr.size;
-			return *((TTString*)&sv);
-		}
 	case OT_DOUBLE:
 		return (Type)o.val.d;
 	case OT_INTEGER:

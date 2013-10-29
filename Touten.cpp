@@ -46,7 +46,7 @@ void* alloc(void* optr, size_t nsize)
 	return optr ;
 }
 
-int print(const std::vector<TT::Object*>& para, TT::Object* ret)
+int print(const std::vector<const TT::Object*>& para, TT::Object* ret)
 {
 	TT::Caster caster;
 	auto endi = para.end();
@@ -57,7 +57,6 @@ int print(const std::vector<TT::Object*>& para, TT::Object* ret)
 
 int _tmain(int argc, _TCHAR* argv[])
 {
-	size_t size = sizeof(TT::Object);
 	TT::MemoryAllocator::setupMethod(alloc);
 
 	{
@@ -117,7 +116,7 @@ bool Touten::loadFile(const String& name)
 
 	Parser parser;
 	ASTNode::Ptr ast;
-	 ast = parser.parse(&i);
+	ast = parser.parse(&i);
 
 
 	Codes codes;
@@ -128,18 +127,22 @@ bool Touten::loadFile(const String& name)
 
 	assembler.assemble(ast);
 
-	StackBasedInterpreter interpreter(codes, constpool, mFuncTable);
+	StackBasedInterpreter interpreter;
 	
-	if (assembler.hasMain())
-		interpreter.execute(assembler.getMain());
+	interpreter.execute(constpool, mFuncTable, codes.data(false), 0);
 
+	if (assembler.hasMain())
+	{
+		TT::FunctionValue* begin = (FunctionValue*)constpool[assembler.getMain()];
+		interpreter.execute(constpool, mFuncTable, codes.data(true), begin->codeAddr );
+	}
 
 	return true;
 }
 
 void Touten::registerFunction(const String& name, TT_Function func)
 {
-	Symbol* sym = mScopemgr.getGlobal()->createSymbol(name, ST_CPP_FUNC);
+	Symbol* sym = mScopemgr.getGlobal()->createSymbol(name, ST_CPP_FUNC, AT_GLOBAL);
 	sym->addrOffset = mFuncTable.insert(name.c_str(), func);
 	mFuncTable[sym->addrOffset]->val.func.codeAddr = (size_t)func;
 }

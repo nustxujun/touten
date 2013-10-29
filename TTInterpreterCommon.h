@@ -12,14 +12,18 @@ namespace TT
 		LOAD_SHARED,
 		LOAD_GLOBAL,
 		LOAD_LOCAL,
-		LOAD_FLLOCAL,
-		LOAD_CONST,
+
+		LOAD_NULL,
+		LOAD_BOOL,
+		LOAD_INT,
+		LOAD_REAL,
+		LOAD_STRING,
+		LOAD_FUNC,
 		LOAD_CPP_FUNC,
 
 		STORE,
 		STORE_ARRAY,
 		ADDR,
-		CACHE,
 
 		//func
 		CALL,
@@ -61,10 +65,41 @@ namespace TT
 		VOID
 	};
 
-	typedef __int32 Operand;
+	typedef int Operand;
 	const int INSTR_SIZE = 1;
-	typedef std::vector<char> Codes;
 
+	class Codes
+	{
+		std::vector<char> global;
+		std::vector<char> code;
+
+		bool switcher;
+	public :
+		Codes():switcher(true){}
+
+		void push_back(char c)
+		{
+			if (switcher)
+				code.push_back(c);
+			else
+				global.push_back(c);
+		}
+
+		char& operator[](size_t i)
+		{
+			if (switcher)
+				return code[i];
+			else
+				return global[i];
+		}
+
+		void switchToCode(){ switcher = true;}
+		void switchToGlobal(){ switcher = false;}
+
+		const char* data(bool s)const {return s? code.data(): global.data();}
+
+		size_t size()const {return switcher? code.size(): global.size();}
+	};
 
 }
 #endif

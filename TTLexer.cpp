@@ -126,16 +126,19 @@ void Lexer::parse(const Char*& read, Token& t)
 			break;
 		case '@':
 			t.type = TT_PRE_GL;
+			++read;
 			return ;
 			break;
 		case '$':
 			t.type = TT_PRE_SA;
+			++read;
 			return ;
 			break;
-		case '#':
-			t.type = TT_PRE_FL;
-			return ;
-			break;
+		//case '#':
+		//	t.type = TT_PRE_FL;
+		//	++read;
+		//	return ;
+		//	break;
 		default:
 			{
 				if (getReserved(read ,t))

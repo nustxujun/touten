@@ -12,9 +12,10 @@ namespace TT
 {
 	struct CallFrame
 	{
-		std::vector<Object*> vars;
+		std::stack<ObjectPtr> vars;
 		size_t beginPos;
-		size_t reserveOpr;
+		Object localenv;
+		Object* sharedenv;
 	};
 
 	class CallStack
@@ -27,6 +28,8 @@ namespace TT
 		void pop();
 		bool empty()const;
 		void reserve();
+		void clear();
+
 	private:
 		CallFrame* mHead;
 		CallFrame* mLast;
@@ -37,33 +40,26 @@ namespace TT
 	class StackBasedInterpreter
 	{
 	public :
-		StackBasedInterpreter(const Codes& c, const ConstantPool& cp, const CPPFunctionTable& ft);
+		StackBasedInterpreter();
 		
-		void execute(size_t offset);
+		void execute(const ConstantPool& cp, const CPPFunctionTable& ft, const char* codes, size_t offset = 0);
 
 	private:
 		void popOpr();
-		Object* pushOpr(Object* obj = 0);
+		Object& pushOpr(Object* obj);
+		Object& pushOpr(const Object& obj);
 
-		CallFrame& pushCallFrame(size_t codepos, size_t resopr);
-		size_t popCallFrame();
+		CallFrame& pushCallFrame(size_t codepos);
+		size_t popCallFrame(Object& ret);
 
-		void compareOpt(Object* o1, Object* o2, Instruction instr, Object* o);
-		void normalOpt(Object* o1, Object* o2, Instruction instr, Object* o);
-		void boolOpt(Object* o1, Object* o2, Instruction instr, Object* o);
-		void autoOpt(Object* o1, Object* o2, Instruction instr);
+		void compareOpt(const Object& o1, const Object& o2, Instruction instr, Object& o);
+		void normalOpt(const Object& o1, const Object& o2, Instruction instr, Object& o);
+		void boolOpt(const Object& o1, const Object& o2, Instruction instr, Object& o);
+		void autoOpt(const Object& o1, const Object& o2, Instruction instr);
 	private:
-		const Codes& mCodes;
-		const ConstantPool& mConstPool;
-		const CPPFunctionTable& mFuncTable;
-
-		typedef std::stack<Object*> OperandStack;
-		OperandStack mOprStack;
-
-		ObjectSet mTempObj;
 
 		CallStack mCallStack;
-		SharedEnv mGlobalEnv;
+		Object mGlobalEnv;
 		Caster mCaster;
 	};
 

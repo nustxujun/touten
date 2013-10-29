@@ -3,11 +3,12 @@
 using namespace TT;
 
 
-#define TTSBASSEMBLER_EXCPET(t) 
-#define TTSBASSEMBLER_WARNING(t) 
+#define TTSBASSEMBLER_EXCPET(t) assert(0);
+#define TTSBASSEMBLER_WARNING(t) assert(0);
 
 StackBasedAssembler::StackBasedAssembler(Codes& c, ScopeManager& sm, ConstantPool& cp):
-	mCodes(c), mScopeMgr(sm), mConstPool(cp), mInstruction(0),	mMain(0), mHasMain(false), mIsFuncall(false)
+	mCodes(c), mScopeMgr(sm), mConstPool(cp), mMain(0),
+	mHasMain(false), mIsFuncall(false), mIsLeft(false)
 {
 }
 
@@ -30,6 +31,11 @@ void StackBasedAssembler::assemble(ASTNode::Ptr ast)
 	for (; i != endi; ++i)
 	{
 		size_t c = i->first->addrOffset;
+		if (c == -1)
+		{
+			 TTSBASSEMBLER_EXCPET("func undefine");
+			 continue;
+		}
 		std::for_each(i->second.begin(), i->second.end(), [this, c](size_t a)
 		{ 
 			*(int*)(&mCodes[a]) = c;
@@ -50,6 +56,11 @@ void StackBasedAssembler::visit(FileNode* node)
 		mMain = s.sym->addrOffset;
 	}
 
+
+	mCodes.switchToGlobal();
+	addInstruction(HALT);
+	mCodes.switchToCode();
+
 	mScopeMgr.leaveScope();
 
 }
@@ -59,39 +70,22 @@ void StackBasedAssembler::visit(VarNode* node)
 	node->var->visit(this);
 	bool hasindex = !(node->indexs.isNull() || node->indexs->obj.isNull());
 
-	//if (mCurSymbol->actype == AT_SHARED)
-	//{
-	//	//return;
-	//}
-
-
-
 	if (mCurSymbol != 0)
 	{
 		switch (mCurSymbol->symtype)
 		{
 		case ST_VARIABLE:
 			{
-				auto ret = mCurSymMap.find(mCurName);
-
-				if (ret == mCurSymMap.end())
-				{
 					Instruction instr ;
 					switch (node->type)
 					{
 					case AT_SHARED: instr = LOAD_SHARED; break;
 					case AT_GLOBAL: instr = LOAD_GLOBAL; break;
 					case AT_LOCAL:  instr = LOAD_LOCAL; break;
-					case AT_FILE:	instr = LOAD_FLLOCAL; break;
 					}
-					size_t pos = mCurSymMap.size();
-					mCurSymMap.insert(std::make_pair(mCurName, pos));
-					addInstruction(LOAD_CONST, stringToConstPool(mCurName.c_str()));
-					addInstruction(instr, pos);
+					addInstruction(LOAD_STRING, stringToConstPool(mCurName.c_str()));
+					addInstruction(instr);
 					
-				}
-				else
-					addInstruction(LOAD, ret->second);
 			}
 			break;
 		case ST_CPP_FUNC:
@@ -99,7 +93,7 @@ void StackBasedAssembler::visit(VarNode* node)
 		case ST_FUNCTION:
 		case ST_FIELD:
 			{
-				size_t addr = addInstruction(LOAD_CONST, mCurSymbol->addrOffset);
+				size_t addr = addInstruction(LOAD_FUNC, mCurSymbol->addrOffset);
 				if (!mCurSymbol->isdefine)
 					addbackfill(mCurSymbol, addr );
 			}
@@ -108,42 +102,34 @@ void StackBasedAssembler::visit(VarNode* node)
 	}
 	else
 	{
-		if (hasindex | !mIsFuncall)
+		if (hasindex | !mIsFuncall )
 		{
-			size_t pos = mCurSymMap.size();
-			mCurSymMap[mCurName] = pos;
 			Instruction instr = LOAD;
 			Scope::Ptr scope;
 			switch (node->type)
 			{
 			case AT_SHARED: 
 				instr = LOAD_SHARED; 
-				scope = mCurScope->getParent();
 				break;
 			case AT_GLOBAL: 
 				instr = LOAD_GLOBAL; 
-				scope = mScopeMgr.getGlobal();
 				break;
 			case AT_LOCAL:  
-				instr = LOAD_LOCAL; 
-				scope = mCurScope;
-				break;
-			case AT_FILE:
-				instr = LOAD_FLLOCAL;
-				scope = mCurScope;
+				instr = LOAD_LOCAL;
 				break;
 			}
 
-			mCurSymbol = scope->createSymbol(mCurName, ST_VARIABLE);
-			addInstruction(LOAD_CONST, stringToConstPool(mCurName.c_str()));
-			addInstruction(instr, pos);
+			mCurSymbol = mCurScope->createSymbol(mCurName, ST_VARIABLE, node->type);
+			addInstruction(LOAD_STRING, stringToConstPool(mCurName.c_str()));
+			//if (!mIsLeft)
+				addInstruction(instr);
 		}
 		else
 		{
-			mCurSymbol = mScopeMgr.getGlobal()->createSymbol(mCurName,ST_FUNCTION);
+			mCurSymbol = mScopeMgr.getGlobal()->createSymbol(mCurName,ST_FUNCTION, AT_GLOBAL);
 			mCurSymbol->isdefine = false;
 
-			size_t addr = addInstruction(LOAD_CONST, 0);//temp
+			size_t addr = addInstruction(LOAD_FUNC, -1);//temp
 			addbackfill(mCurSymbol, addr );
 		}
 	
@@ -166,7 +152,9 @@ void StackBasedAssembler::visit(AssginNode* node)
 {
 	node->right->visit(this);
 
+	mIsLeft = true;
 	size_t varcount = visit(node->left);
+	mIsLeft = false;
 
 	if (varcount > 1)
 		addInstruction(STORE_ARRAY, varcount);
@@ -178,7 +166,9 @@ void StackBasedAssembler::visit(AssginNode* node)
 
 void StackBasedAssembler::visit(VarListNode* node)
 {
+	mCodes.switchToGlobal();
 	visit(node->vars);
+	mCodes.switchToCode();
 }
 
 void StackBasedAssembler::visit(FunctionNode* node)
@@ -201,12 +191,10 @@ void StackBasedAssembler::visit(FunctionNode* node)
 	else
 	{
 		sym.sym = mScopeMgr.getGlobal()->createSymbol(
-			node->name, ST_FUNCTION);
+			node->name, ST_FUNCTION, AT_GLOBAL);
 	}
 	
-	mCurSymMap.clear();
-
-	sym.sym->addrOffset = mInstruction;//temp
+	sym.sym->addrOffset = mCodes.size();//temp
 	sym.sym->isdefine = true;
 
 	enterScope(node->name);
@@ -219,12 +207,10 @@ void StackBasedAssembler::visit(FunctionNode* node)
 		auto sym = mCurScope->getSymbol(mCurName);
 		if (sym.sym == 0 || !sym.local)
 		{
-			size_t pos = mCurSymMap.size();
-			mCurSymMap[mCurName] = pos;
-			mCurSymbol = mCurScope->createSymbol(mCurName, ST_VARIABLE);
+			mCurSymbol = mCurScope->createSymbol(mCurName, ST_VARIABLE, AT_LOCAL);
 			mCurSymbol->isdefine = true;
-			addInstruction(LOAD_CONST, stringToConstPool(mCurName.c_str()));
-			addInstruction(CACHE,  pos);
+			addInstruction(LOAD_STRING, stringToConstPool(mCurName.c_str()));
+			addInstruction(STORE);
 		}
 		else
 		{
@@ -235,12 +221,11 @@ void StackBasedAssembler::visit(FunctionNode* node)
 		++count;
 	}
 
-	Object fo;
-	fo.val.func.paraCount = count;
-	fo.val.func.codeAddr = sym.sym->addrOffset;
-	fo.type = OT_FUNCTION;
-	fo.isConst = true;
-	sym.sym->addrOffset = mConstPool << fo;
+	FunctionValue fv;
+	fv.paraCount = count;
+	fv.codeAddr = sym.sym->addrOffset;
+
+	sym.sym->addrOffset = mConstPool << fv;
 
 	node->body->visit(this);
 
@@ -267,7 +252,7 @@ void StackBasedAssembler::visit(FieldNode* node)
 	else
 	{
 		sym.sym = mScopeMgr.getGlobal()->createSymbol(
-			node->name, ST_FUNCTION);
+			node->name, ST_FUNCTION, AT_LOCAL);
 	}
 	//sym->ex = mInstruction;
 	//sym->isdefine = true;
@@ -287,50 +272,29 @@ void StackBasedAssembler::visit(BlockNode* node)
 
 void StackBasedAssembler::visit(ConstNode* node)
 {
-	size_t addr;
 	Object obj;
-	obj.isConst = true;
 	switch (node->type)
 	{
 	case CT_NULL:
-		{
-			obj.type = OT_NULL;
-			static size_t null = mConstPool << obj;
-			addr = null;
-		}
-		break;
+		addInstruction(LOAD_NULL);
+		return;
 	case CT_TRUE:
-		{
-			obj.type = OT_TRUE;
-			static size_t tr = mConstPool << obj;
-			addr = tr;
-		}
-		break;
+		addInstruction(LOAD_BOOL, 1);
+		return;
 	case CT_FALSE:
-		{
-			obj.type = OT_FALSE;
-			static size_t fa = mConstPool << obj;
-			addr = fa;
-		}
-		break;
+		addInstruction(LOAD_BOOL, 0);
+		return;
 	case CT_INTEGER:
-		obj.type = OT_INTEGER;
-		obj.val.i = node->value.i;
-		addr = mConstPool << obj;
-		break;
+		//addInstruction(LOAD_INT, mConstPool << node->value.i);
+		addInstruction(LOAD_INT, node->value.i);//加速整型读取
+		return;
 	case CT_DOUBLE:
-		obj.type = OT_INTEGER;
-		obj.val.i = node->value.i;
-		addr = mConstPool << obj;
-		break;
+		addInstruction(LOAD_REAL, mConstPool << node->value.d);
+		return;
 	case CT_STRING:
-		{
-			addr = stringToConstPool(node->value.s);
-		}
-		break;
+		addInstruction(LOAD_STRING, stringToConstPool(node->value.s));
+		return;
 	}
-	memset(&obj, 0, sizeof(Object));
-	addInstruction(LOAD_CONST, addr);
 }
 
 void StackBasedAssembler::visit(FuncCallNode* node)
@@ -345,6 +309,7 @@ void StackBasedAssembler::visit(FuncCallNode* node)
 
 	switch (mCurSymbol->symtype)
 	{
+	case ST_VARIABLE:
 	case ST_FUNCTION:
 		{
 			//stack desc:[before] --> [after]
@@ -374,13 +339,13 @@ void StackBasedAssembler::visit(OperatorNode* node)
 
 void StackBasedAssembler::visit(LoopNode* node)
 {
-	size_t begin = mInstruction;
+	size_t begin = mCodes.size();
 	node->expr->visit(this);
 	addInstruction(TEST);
 	size_t condjmp = addInstruction(JZ,0);
 	node->block->visit(this);
 	addInstruction(JMP,begin);
-	size_t end = mInstruction;
+	size_t end = mCodes.size();
 	*(int*)(&mCodes[condjmp]) = end;
 
 }
@@ -445,16 +410,12 @@ void StackBasedAssembler::addbackfill(Symbol* s, size_t instr)
 
 size_t StackBasedAssembler::stringToConstPool(const Char* str)
 {
-	Object obj;
 	size_t charcount = 1;
 	const Char* tmp = str;
 	while (*tmp++) ++charcount;
 
-	obj.type = OT_CONST_STRING;
-	obj.val.cstr.size = charcount;
-
-	size_t addr = mConstPool.write(&obj, sizeof(Object) - 4);
-	mConstPool.write(str, charcount * sizeof(Char));
+	size_t addr = mConstPool << charcount;
+	mConstPool.write(str, sizeof(Char) * charcount);
 	return addr;
 }
 

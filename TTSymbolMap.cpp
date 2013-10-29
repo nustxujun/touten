@@ -10,12 +10,13 @@ SymbolMap::~SymbolMap()
 		[](Symbols::value_type& v){delete v.second;});
 }
 
-Symbol* SymbolMap::createSymbol(const String& name, SymbolType st)
+Symbol* SymbolMap::createSymbol(const String& name, SymbolType st, AccessType at)
 {
 	Symbol* s = createSymbolImpl(st);
 
 	s->symtype = st;
-	s->addrOffset = mSymbols.size();
+	s->addrOffset = -1;
+	s->actype = at;
 	s->isdefine = false;
 
 	auto result = mSymbols.insert(Symbols::value_type(name, s));

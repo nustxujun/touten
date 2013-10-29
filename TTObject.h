@@ -14,7 +14,6 @@ namespace TT
 		OT_TRUE,
 		OT_FALSE,
 		OT_STRING,		
-		OT_CONST_STRING,
 		OT_DOUBLE,
 		OT_INTEGER,
 		OT_FUNCTION,
@@ -36,18 +35,11 @@ namespace TT
 		Char* cont;
 	};
 
-	struct ConstString
-	{
-		size_t size;
-		Char cont[2];
-	};
-
 	class TTString
 	{
 	public :
 		TTString(size_t count);
 		TTString(const StringValue& sv);
-		TTString(const ConstString& cs);
 		TTString(const Char* str);
 		TTString(int i);
 		TTString(double d);
@@ -72,7 +64,6 @@ namespace TT
 		double d;
 
 		StringValue str;
-		ConstString cstr;
 		FunctionValue func;
 
 		Array* arr;
@@ -81,12 +72,39 @@ namespace TT
 	struct Object
 	{
 		ObjectType type;
-		bool isConst;
-		Value val;//考虑const string的问题，value一定放最后
+		Value val;
 
 		Object();
+		Object(const Object& obj);
+		Object(bool v);
+		Object(int v);
+		Object(double v);
+		Object(const Char* str, size_t size);
+		Object(FunctionValue v);
+
 		~Object();
 		Object& operator=(const Object& obj);
+
+		void swap(Object& obj);
+	};
+
+	class ObjectPtr
+	{
+	public :
+		ObjectPtr(Object* obj = 0);
+		ObjectPtr(const Object& obj);
+		Object& operator*() const;
+		Object* operator->()const;
+		
+		~ObjectPtr();
+		ObjectPtr(const ObjectPtr& obj);
+
+	private:
+
+	private:
+		Object* mInst;
+		bool mAutoDel;
+		size_t* mCount;
 	};
 
 	class ObjectVector
@@ -188,7 +206,7 @@ namespace TT
 
 	};
 
-	typedef int (*TT_Function)(const std::vector<Object*>& paras, Object* ret);
+	typedef int (*TT_Function)(const std::vector<const Object*>& paras, Object* ret);
 
 	static bool compareString(const Char* s1, const Char* s2)
 	{

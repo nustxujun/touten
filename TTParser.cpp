@@ -22,13 +22,7 @@ ASTNode::Ptr Parser::parseFile(ParserInput* input)
 
 	while(true)
 	{
-		AccessType at = AT_FILE;
-		switch ( input->lookahead().type)
-		{
-		case TT_GLOBAL:	at = AT_GLOBAL; break;
-		case TT_LOCAL: at = AT_FILE; break;
-		}
-		ASTNode::Ptr o = parseDef(input, at);
+		ASTNode::Ptr o = parseDef(input, AT_GLOBAL);
 		if (o.isNull()) return f;
 		last = last->setAndNext(o);
 
@@ -89,11 +83,12 @@ ASTNode::Ptr Parser::parseVarlist(ParserInput* input, AccessType at)
 			VarNode* vn = new VarNode;
 			vn->type = at;
 			vn->var = nn;
-
+	
 			ASTNode::Ptr a = parseAssgin(input, vn);
-			
+
 			last = last->setAndNext(a);
 			t = input->lookahead();
+			
 		}
 		else {last = last->setAndNext(nn);}
 
@@ -258,7 +253,6 @@ ASTNode::Ptr Parser::parseStat(ParserInput* input)
 		return parseDef(input, AT_LOCAL); break;
 	case TT_PRE_GL: 
 	case TT_PRE_SA:
-	case TT_PRE_FL:
 	case TT_NAME://assgin funcall
 		{
 			ASTNode::Ptr var = parseVar(input);
@@ -317,14 +311,12 @@ ASTNode::Ptr Parser::parseVar(ParserInput* input)
 	{
 	case TT_PRE_GL: at = AT_GLOBAL; name = input->next(); break;
 	case TT_PRE_SA: at = AT_SHARED; name = input->next(); break;
-	case TT_PRE_FL: at = AT_FILE;	name = input->next(); break;
-
 	}
 	NameNode* nn = new NameNode;
 	copyString(nn->name,name.string,name.size);
 
 	VarNode* vn = new VarNode;
-	vn->type = AT_LOCAL;
+	vn->type = at;
 	vn->var = nn;
 	ASTNodeList::Ptr last = (vn->indexs = new ASTNodeList);
 	ASTNode::Ptr v = vn;
@@ -360,6 +352,7 @@ ASTNode::Ptr Parser::parseVar(ParserInput* input)
 				return 0;
 			}
 			ConstNode* cn = new ConstNode;
+			cn->type = CT_STRING;
 			copyString(cn->value.s, t.string, t.size);
 			last = last->setAndNext(cn);
 		}
@@ -386,29 +379,11 @@ ASTNode::Ptr Parser::parseExpr(ParserInput* input,  BinopStack* stack)
 	case TT_DOUBLE:
 	case TT_STRING:
 		{
-			Token t = input->next();
-			ConstNode* cn = new ConstNode;
-			switch (look.type)
-			{
-			case TT_NULL: cn->type = CT_NULL; break;
-			case TT_TRUE: cn->type = CT_TRUE; break;
-			case TT_FALSE: cn->type = CT_FALSE; break;
-			case TT_INTEGER: cn->type = CT_INTEGER; break;
-			case TT_DOUBLE: cn->type = CT_DOUBLE; break;
-			case TT_STRING:	cn->type = CT_STRING; break;
-			}
-
-			if (t.type == TT_STRING)
-				copyString(cn->value.s, t.val.s.b, t.val.s.s);
-			else
-				memcpy(&cn->value, &t.val, sizeof(t.val));
-
-			expr = cn;
+			expr = parseConst(input);
 		}
 		break;
 	case TT_PRE_GL:
 	case TT_PRE_SA:
-	case TT_PRE_FL:
 	case TT_NAME://var funcall 
 		{
 			expr = parseAccessSymbol(input);
@@ -779,6 +754,32 @@ ASTNode::Ptr Parser::parseAccessSymbol(ParserInput* input)
 		return var;
 }
 
+ASTNode::Ptr Parser::parseConst(ParserInput* input)
+{
+	Token t = input->lookahead();
+	ConstNode* cn = new ConstNode;
+	ASTNode::Ptr c = cn;
+	switch (t.type)
+	{
+	case TT_NULL: cn->type = CT_NULL; break;
+	case TT_TRUE: cn->type = CT_TRUE; break;
+	case TT_FALSE: cn->type = CT_FALSE; break;
+	case TT_INTEGER: cn->type = CT_INTEGER; break;
+	case TT_DOUBLE: cn->type = CT_DOUBLE; break;
+	case TT_STRING:	cn->type = CT_STRING; break;
+	default:
+		TTPARSER_EXCEPT("unexpected token£¬ need constant");
+		return 0;
+	}
+
+	input->next();
+	if (t.type == TT_STRING)
+		copyString(cn->value.s, t.val.s.b, t.val.s.s);
+	else
+		memcpy(&cn->value, &t.val, sizeof(t.val));	
+
+	return c;
+}
 
 
 bool Parser::checkOperator(const Token& t, Char c)
