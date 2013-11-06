@@ -13,13 +13,24 @@
 
 size_t memsize = 0;
 
+struct REC
+{
+	int create;
+	int release;
+};
+std::map<int ,REC > memrecord;
+
 void* alloc(void* optr, size_t nsize)
 {
+#ifndef _DEBUG
+	return ::realloc(optr, nsize);
+#else
 	if (nsize == 0)
 	{
 		int* s = (int*)optr - 1;
 		memsize -= *s;
 #ifdef MEM_DEBUG
+		memrecord[*s].release += 1;
 		printf("total:%10d, current:- %d\n", memsize, *s);
 #endif
 		::free(s);
@@ -32,6 +43,7 @@ void* alloc(void* optr, size_t nsize)
 			s = (int*)optr - 1;
 			memsize -= *s;
 #ifdef MEM_DEBUG
+			memrecord[*s].release += 1;
 			printf("total:%10d, current:- %d\n", memsize, *s);
 #endif
 		}
@@ -40,9 +52,11 @@ void* alloc(void* optr, size_t nsize)
 		optr = s + 1;
 		memsize += nsize;
 #ifdef MEM_DEBUG
+		memrecord[*s].create += 1;
 		printf("total:%10d, current:+ %d\n", memsize, *s);
 #endif
 	}
+#endif
 	return optr ;
 }
 
@@ -57,16 +71,20 @@ int print(const std::vector<const TT::Object*>& para, TT::Object* ret)
 
 int _tmain(int argc, _TCHAR* argv[])
 {
-	TT::MemoryAllocator::setupMethod(alloc);
+	
+
 
 	{
+		//TT::MemoryAllocator::setupMethod(alloc);
 		TT::Touten t;
-		t.registerFunction(L"print", print);
-	
-		t.loadFile(L"test.txt");
+		//t.registerFunction(L"print", print);
+		//t.loadFile(L"test2.txt");
+		//t.loadFile(L"test.txt");
+		//t.call(L"main");
 	}
 
 	assert(memsize == 0);
+	_CrtDumpMemoryLeaks();
 	getchar();
 	return 0;
 }
@@ -119,23 +137,14 @@ bool Touten::loadFile(const String& name)
 	ast = parser.parse(&i);
 
 
-	Codes codes;
-	
-	ConstantPool constpool(1024);
-
-	StackBasedAssembler assembler(codes, mScopemgr, constpool);
+	StackBasedAssembler assembler( mScopemgr, mConstPool);
 
 	assembler.assemble(ast);
 
-	StackBasedInterpreter interpreter;
-	
-	interpreter.execute(constpool, mFuncTable, codes.data(false), 0);
+	call(GLOBAL_INIT_FUNC);
 
-	if (assembler.hasMain())
-	{
-		TT::FunctionValue* begin = (FunctionValue*)constpool[assembler.getMain()];
-		interpreter.execute(constpool, mFuncTable, codes.data(true), begin->codeAddr );
-	}
+	//mInterpreter.execute(mConstPool, mFuncTable, mCodes.data(false), 0);
+
 
 	return true;
 }
@@ -143,7 +152,20 @@ bool Touten::loadFile(const String& name)
 void Touten::registerFunction(const String& name, TT_Function func)
 {
 	Symbol* sym = mScopemgr.getGlobal()->createSymbol(name, ST_CPP_FUNC, AT_GLOBAL);
-	sym->addrOffset = mFuncTable.insert(name.c_str(), func);
-	mFuncTable[sym->addrOffset]->val.func.codeAddr = (size_t)func;
+	FunctionValue fv;
+	fv.codeAddr = func;
+	fv.paraCount = 0;
+	sym->addrOffset =  mConstPool << fv;
+}
+
+void Touten::call(const String& name)
+{
+	Scope::SymbolObj sym = mScopemgr.getGlobal()->getSymbol(name);
+	if (sym.sym == 0 || sym.sym->symtype != ST_FUNCTION) return ;
+
+	TT::FunctionValue* begin = (FunctionValue*)mConstPool[sym.sym->addrOffset];
+	mInterpreter.execute(mConstPool, ((Codes*)begin->codeAddr)->data());
+
+
 }
 

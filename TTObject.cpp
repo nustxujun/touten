@@ -1,5 +1,6 @@
 #include "TTObject.h"
 #include "TTMemoryAllocator.h"
+#include "TTTools.h"
 
 using namespace TT;
 
@@ -30,25 +31,10 @@ TTString::TTString(const Char* str)
 
 TTString::TTString(int i)
 {
-	int length = 0;
-	size_t num = i;
-	do
-	{
-		++length;
-		num /= 10;
-	}
-	while( num != 0);
-	
-	numChar = length + 1;
-	data = (Char*)TT_MALLOC(numChar * sizeof(Char));
-
-	num = i;
-	for (int i = length - 1; i >= 0; --i)
-	{
-		data[i] = (num % 10) + '0';
-		num /= 10;
-	}
-	data[length] = 0;
+	String tmp = Tools::toString(i);
+	data = (Char*)TT_MALLOC((tmp.size() + 1) * sizeof(Char));
+		
+	memcpy(data, tmp.c_str(), (tmp.size() + 1) * sizeof(Char));
 }
 
 TTString::TTString(double d)
@@ -261,11 +247,19 @@ Object* Array::operator[](size_t index)
 {
 	if (!mHash)
 	{
-		if (checkSize(index))
+		if (!checkSize(index))
+		{
+			const int ARRAY_MAX_SIZE = 0xff;
+			if (index < ARRAY_MAX_SIZE)
+			{
+				grow();
+				return &mHead[index].obj;
+			}
+			else
+				convertToHashMap();
+		}
+		else	
 			return &mHead[index].obj;
-		else
-			convertToHashMap();
-		
 	}
 
 	Char key[IntkeyLength];
@@ -379,6 +373,7 @@ void Array::grow()
 	{
 		mHead = (Elem*)TT_REALLOC(mHead, newcap * sizeof(Elem));
 		mTail = mHead + newcap;
+		memset(mHead + size, 0, (newcap - size) * sizeof(Elem));
 	}
 
 }

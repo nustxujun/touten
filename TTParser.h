@@ -39,7 +39,7 @@ namespace TT
 		ASTNode::Ptr parseVar(ParserInput* input);
 		ASTNode::Ptr parseAssgin(ParserInput* input, ASTNode::Ptr pre = 0);
 		ASTNode::Ptr parseUnop(ParserInput* input);
-		ASTNode::Ptr parseFuncCall(ParserInput* input, ASTNode::Ptr pre = 0);
+		ASTNode::Ptr parseFuncCall(ParserInput* input, bool needret, ASTNode::Ptr pre = 0);
 		ASTNode::Ptr parseAccessSymbol(ParserInput* input);
 		ASTNode::Ptr parseConst(ParserInput* input);
 		struct Binop

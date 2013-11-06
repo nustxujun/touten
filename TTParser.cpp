@@ -73,9 +73,7 @@ ASTNode::Ptr Parser::parseVarlist(ParserInput* input, AccessType at)
 		}
 
 		NameNode* nn = new NameNode();
-
-		copyString(nn->name, t.string,  t.size);
-
+		nn->name = String(t.string, t.size);
 
 		t = input->lookahead();
 		if (t.type  == TT_ASSGIN)
@@ -106,13 +104,12 @@ ASTNode::Ptr Parser::parseFunction(ParserInput* input, AccessType at)
 	Token t = input->next();
 	FunctionNode* fn = new FunctionNode();
 	ASTNode::Ptr f = fn;
-	fn->name[0] = 0;//anonymous
 	fn->acctype = at;
 
 	t = input->next();
 	if (t.type == TT_NAME)
 	{
-		copyString(fn->name, t.string, t.size);
+		fn->name = String(t.string, t.size);
 		t = input->next();
 	}
 	
@@ -137,7 +134,7 @@ ASTNode::Ptr Parser::parseFunction(ParserInput* input, AccessType at)
 			}
 
 			NameNode* nn = new NameNode;
-			copyString(nn->name, t.string,  t.size);
+			nn->name = String(t.string, t.size);
 
 			last = last->setAndNext(nn);
 
@@ -175,7 +172,6 @@ ASTNode::Ptr Parser::parseField(ParserInput* input, AccessType at)
 	Token t = input->next();
 	FieldNode* fn = new FieldNode();
 	ASTNode::Ptr f = fn;
-	*fn->name = 0;//anonymous
 	fn->acctype = at;
 
 	if (t.type == TT_FIELD)
@@ -186,7 +182,7 @@ ASTNode::Ptr Parser::parseField(ParserInput* input, AccessType at)
 			TTPARSER_EXCEPT("field need name");
 			return 0;
 		}
-		copyString(fn->name, t.string, t.size);
+		fn->name = String(t.string, t.size);
 		t = input->next();
 	}
 
@@ -261,7 +257,7 @@ ASTNode::Ptr Parser::parseStat(ParserInput* input)
 				return parseAssgin(input,var);
 			}
 			else
-				return parseFuncCall(input, var);
+				return parseFuncCall(input,false, var);
 
 		}
 		break;
@@ -313,7 +309,7 @@ ASTNode::Ptr Parser::parseVar(ParserInput* input)
 	case TT_PRE_SA: at = AT_SHARED; name = input->next(); break;
 	}
 	NameNode* nn = new NameNode;
-	copyString(nn->name,name.string,name.size);
+	nn->name = String(name.string, name.size);
 
 	VarNode* vn = new VarNode;
 	vn->type = at;
@@ -703,7 +699,7 @@ ASTNode::Ptr Parser::parseCond(ParserInput* input)
 	return 0;
 }
 
-ASTNode::Ptr Parser::parseFuncCall(ParserInput* input, ASTNode::Ptr pre)
+ASTNode::Ptr Parser::parseFuncCall(ParserInput* input, bool needret,  ASTNode::Ptr pre)
 {
 	ASTNode::Ptr var = pre.isNull() ? parseVar(input) : pre;
 
@@ -716,6 +712,7 @@ ASTNode::Ptr Parser::parseFuncCall(ParserInput* input, ASTNode::Ptr pre)
 	FuncCallNode* fn = new FuncCallNode();
 	ASTNode::Ptr f = fn;
 	fn->var = var;
+	fn->needrets = needret;
 
 	if (!checkDelimiter(input->lookahead(), ')'))
 	{
@@ -748,7 +745,7 @@ ASTNode::Ptr Parser::parseAccessSymbol(ParserInput* input)
 	ASTNode::Ptr var = parseVar(input);
 	if (checkDelimiter(input->lookahead(), '('))
 	{
-		return parseFuncCall(input, var);
+		return parseFuncCall(input,true, var);
 	}
 	else
 		return var;

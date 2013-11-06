@@ -68,38 +68,60 @@ namespace TT
 	typedef int Operand;
 	const int INSTR_SIZE = 1;
 
-	class Codes
-	{
-		std::vector<char> global;
-		std::vector<char> code;
+	typedef std::vector<char> Codes;
 
-		bool switcher;
-	public :
-		Codes():switcher(true){}
+	//class Codes
+	//{
 
-		void push_back(char c)
-		{
-			if (switcher)
-				code.push_back(c);
-			else
-				global.push_back(c);
-		}
+	//public :
+	//	typedef std::vector<char> Code;
+	//	typedef std::vector<Code*> CodeVec;
 
-		char& operator[](size_t i)
-		{
-			if (switcher)
-				return code[i];
-			else
-				return global[i];
-		}
 
-		void switchToCode(){ switcher = true;}
-		void switchToGlobal(){ switcher = false;}
+	//public :
+	//	Codes()
+	//	{
+	//	}
 
-		const char* data(bool s)const {return s? code.data(): global.data();}
+	//	~Codes()
+	//	{
+	//		std::for_each(mCodeVec.begin(), mCodeVec.end(), [](Code* c){ delete c;});
+	//	}
 
-		size_t size()const {return switcher? code.size(): global.size();}
-	};
+	//	void push_back(char c)
+	//	{
+	//		(*mCurrent)->push_back(c);
+	//	}
+
+	//	char& operator[](size_t i)
+	//	{
+	//		return (**mCurrent)[i];
+	//	}
+
+	//	const char* data()const 
+	//	{
+	//		return (*mCurrent)->data();
+	//	}
+
+	//	size_t size()const 
+	//	{
+	//		return (*mCurrent)->size();
+	//	}
+	//	
+	//	size_t addCode()
+	//	{
+	//		mCodeVec.push_back(new Code());
+	//		return mCodeVec.size() - 1;
+	//	}
+
+	//	Code* setCode(size_t i)
+	//	{
+	//		return mCodeVec[i];
+	//	}	
+	//private:
+	//	CodeVec::iterator mCurrent;
+	//	CodeVec mCodeVec;
+	//};
 
 }
 #endif

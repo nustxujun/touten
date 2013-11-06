@@ -8,7 +8,7 @@ namespace TT
 	class ConstantPool
 	{
 	public :
-		ConstantPool(size_t cap);
+		ConstantPool(size_t cap = 1024);
 		~ConstantPool();
 
 		size_t write(const void* buff, size_t size);

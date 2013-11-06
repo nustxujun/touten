@@ -1,5 +1,5 @@
 #include "TTScope.h"
-
+#include "TTTools.h"
 using namespace TT;
 
 Scope::Scope(Scope::Ptr parent):
@@ -31,6 +31,26 @@ Symbol* Scope::createSymbol(const String& name, SymbolType st, AccessType at)
 	return mSymbols.createSymbol(name, st, at);
 }
 
+size_t Scope::getOffset()
+{
+	return mCodes.size();
+}
+
+
+Codes* Scope::getCode()
+{
+	return &mCodes;
+}
+
+size_t Scope::writeCode(const void* buff, size_t size)
+{
+	size_t head = getOffset();
+	const char* cont = (const char*)buff;
+	for (size_t i = 0; i < size ;++i)
+		mCodes.push_back(*cont++);
+	return head;
+}
+
 const String ScopeManager::anonymous_scope = L"__anonymous_scope";
 const String ScopeManager::global_scope = L"__global_scope";
 
@@ -50,7 +70,11 @@ Scope::Ptr ScopeManager::enterScope(const String& name)
 {
 	Scope::Ptr s;
 	if (name == anonymous_scope)
-		s = createScope();
+	{
+		static int index = 1;
+		
+		s = createScope(name + Tools::toString(index++));
+	}
 	else
 	{
 		s = getScope(name);

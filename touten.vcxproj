@@ -62,7 +62,7 @@
       <WarningLevel>Level3</WarningLevel>
       <PrecompiledHeader>
       </PrecompiledHeader>
-      <Optimization>MaxSpeed</Optimization>
+      <Optimization>Full</Optimization>
       <FunctionLevelLinking>true</FunctionLevelLinking>
       <IntrinsicFunctions>true</IntrinsicFunctions>
       <PreprocessorDefinitions>WIN32;NDEBUG;_CONSOLE;%(PreprocessorDefinitions)</PreprocessorDefinitions>
@@ -98,9 +98,9 @@
     <ClInclude Include="TTStackBasedInterpreter.h" />
     <ClInclude Include="TTStaticArea.h" />
     <ClInclude Include="TTSymbolMap.h" />
+    <ClInclude Include="TTTools.h" />
     <ClInclude Include="TTTranslator.h" />
     <ClInclude Include="TTType.h" />
-    <ClInclude Include="TTCPPFunctionTable.h" />
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="stdafx.cpp" />
@@ -118,7 +118,7 @@
     <ClCompile Include="TTStackBasedInterpreter.cpp" />
     <ClCompile Include="TTStaticArea.cpp" />
     <ClCompile Include="TTSymbolMap.cpp" />
-    <ClCompile Include="TTCPPFunctionTable.cpp" />
+    <ClCompile Include="TTTools.cpp" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">

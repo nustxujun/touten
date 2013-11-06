@@ -8,15 +8,14 @@
 #include "TTInterpreterCommon.h"
 namespace TT
 {
+	static const Char* GLOBAL_INIT_FUNC = L"__initGlobal";
+
 	class StackBasedAssembler: public ASTNodeVisitor
 	{
 	public:
-		StackBasedAssembler(Codes& c, 
-			ScopeManager& sm, ConstantPool& cp);
+		StackBasedAssembler(ScopeManager& sm, ConstantPool& cp);
 
 		void assemble(ASTNode::Ptr ast);
-		bool hasMain()const ;
-		size_t getMain()const;
 	private:
 
 		void visit(FileNode* node);
@@ -43,22 +42,13 @@ namespace TT
 		template <class T>
 		size_t addCode(const T& c)
 		{
-			return addCode(&c, sizeof(T));
-		}
-
-		size_t addCode(const void* b, size_t s)
-		{
-			size_t head = mCodes.size();
-			const char* code = (const char*)b;
-			for (size_t i = 0; i < s; ++i)
-				mCodes.push_back(*code++);
-			return head;			
+			return mCurScope->writeCode(&c, sizeof(T));
 		}
 
 		template <class T>
-		void fill(T value, size_t offset)
+		void fill(T value, char* addr)
 		{
-			*((T*) &mCodes[offset]) = value;
+			*((T*) addr) = value;
 		}
 
 		Scope::Ptr enterScope(const Char* name = 0);
@@ -68,7 +58,6 @@ namespace TT
 
 	private:
 		ScopeManager& mScopeMgr;
-		Codes& mCodes;
 		ConstantPool& mConstPool;
 
 		//current parameters;
@@ -84,8 +73,6 @@ namespace TT
 
 		void addbackfill(Symbol*, size_t instr);
 		
-		size_t mMain;
-		bool mHasMain;
 	};
 }
 

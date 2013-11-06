@@ -1,65 +1,52 @@
 #include "TTStackBasedAssembler.h"
-
+#include "TTTools.h"
 using namespace TT;
 
 
 #define TTSBASSEMBLER_EXCPET(t) assert(0);
 #define TTSBASSEMBLER_WARNING(t) assert(0);
 
-StackBasedAssembler::StackBasedAssembler(Codes& c, ScopeManager& sm, ConstantPool& cp):
-	mCodes(c), mScopeMgr(sm), mConstPool(cp), mMain(0),
-	mHasMain(false), mIsFuncall(false), mIsLeft(false)
+StackBasedAssembler::StackBasedAssembler(ScopeManager& sm, ConstantPool& cp):
+	mScopeMgr(sm), mConstPool(cp),
+	mIsFuncall(false), mIsLeft(false)
 {
 }
-
-bool StackBasedAssembler::hasMain()const 
-{
-	return mHasMain;
-}
-
-size_t StackBasedAssembler::getMain()const
-{
-	return mMain;
-}
-
 
 void StackBasedAssembler::assemble(ASTNode::Ptr ast)
 {
 	ast->visit(this);
 
-	auto i = mBackFill.begin(), endi = mBackFill.end();
-	for (; i != endi; ++i)
-	{
-		size_t c = i->first->addrOffset;
-		if (c == -1)
-		{
-			 TTSBASSEMBLER_EXCPET("func undefine");
-			 continue;
-		}
-		std::for_each(i->second.begin(), i->second.end(), [this, c](size_t a)
-		{ 
-			*(int*)(&mCodes[a]) = c;
-		});
-	}
+	//auto i = mBackFill.begin(), endi = mBackFill.end();
+	//for (; i != endi; ++i)
+	//{
+	//	size_t c = i->first->addrOffset;
+	//	if (c == -1)
+	//	{
+	//		 TTSBASSEMBLER_EXCPET("func undefine");
+	//		 continue;
+	//	}
+	//	std::for_each(i->second.begin(), i->second.end(), [this, c](size_t a)
+	//	{ 
+	//		*(int*)(&mCodes[a]) = c;
+	//	});
+	//}
 }
 
 void StackBasedAssembler::visit(FileNode* node)
 {
 	mCurScope = mScopeMgr.enterScope();
-
 	visit(node->defs);
 
-	auto s = mCurScope->getSymbol(L"main");
-	if (s.sym && s.sym->symtype == ST_FUNCTION)
-	{
-		mHasMain = true;
-		mMain = s.sym->addrOffset;
-	}
-
-
-	mCodes.switchToGlobal();
 	addInstruction(HALT);
-	mCodes.switchToCode();
+
+	Scope::SymbolObj g = mCurScope->getSymbol(GLOBAL_INIT_FUNC);
+	if (g.sym == 0)
+	{
+		g.sym = mScopeMgr.getGlobal()->createSymbol(GLOBAL_INIT_FUNC, ST_FUNCTION, AT_GLOBAL);
+	}
+	FunctionValue fv;
+	fv.codeAddr = mCurScope->getCode();
+	g.sym->addrOffset = mConstPool << fv;
 
 	mScopeMgr.leaveScope();
 
@@ -166,15 +153,14 @@ void StackBasedAssembler::visit(AssginNode* node)
 
 void StackBasedAssembler::visit(VarListNode* node)
 {
-	mCodes.switchToGlobal();
 	visit(node->vars);
-	mCodes.switchToCode();
 }
 
 void StackBasedAssembler::visit(FunctionNode* node)
 {
 
 	auto sym = mCurScope->getSymbol(node->name);
+	bool anonymous = node->name == L"";
 
 	if (sym.sym != 0 )
 	{
@@ -190,19 +176,28 @@ void StackBasedAssembler::visit(FunctionNode* node)
 	}
 	else
 	{
-		sym.sym = mScopeMgr.getGlobal()->createSymbol(
-			node->name, ST_FUNCTION, AT_GLOBAL);
+		if (anonymous)
+		{
+			static int index = 1;
+			const String anonymous = L"__anonymous_function";
+			sym.sym = mCurScope->createSymbol(
+				anonymous + Tools::toString(index++), ST_FUNCTION, AT_GLOBAL);
+		}
+		else
+		{
+
+			sym.sym = mScopeMgr.getGlobal()->createSymbol(
+				node->name, ST_FUNCTION, AT_GLOBAL);
+		}
 	}
 	
-	sym.sym->addrOffset = mCodes.size();//temp
 	sym.sym->isdefine = true;
 
-	enterScope(node->name);
+	enterScope(node->name.c_str());
 	ASTNodeList::Ptr sub = node->paras;
 	size_t count = 0;
 	while (!sub.isNull() && !sub->obj.isNull())
 	{
-
 		sub->obj->visit(this);
 		auto sym = mCurScope->getSymbol(mCurName);
 		if (sym.sym == 0 || !sym.local)
@@ -223,7 +218,7 @@ void StackBasedAssembler::visit(FunctionNode* node)
 
 	FunctionValue fv;
 	fv.paraCount = count;
-	fv.codeAddr = sym.sym->addrOffset;
+	fv.codeAddr = mCurScope->getCode();
 
 	sym.sym->addrOffset = mConstPool << fv;
 
@@ -231,6 +226,9 @@ void StackBasedAssembler::visit(FunctionNode* node)
 
 	addInstruction(RETURN);
 	leaveScope();
+
+	if (anonymous)
+		addInstruction(LOAD_FUNC, sym.sym->addrOffset);
 }
 
 void StackBasedAssembler::visit(FieldNode* node)
@@ -314,12 +312,12 @@ void StackBasedAssembler::visit(FuncCallNode* node)
 		{
 			//stack desc:[before] --> [after]
 			//paras funcname callinstr argsnum --> paras
-			addInstruction(CALL, argsnum);
+			addInstruction(CALL, argsnum | (node->needrets << 31));
 		}
 		break;
 	case ST_CPP_FUNC:
 		{
-			addInstruction(CALL_HOST, argsnum);
+			addInstruction(CALL_HOST, argsnum | (node->needrets << 31));
 		}
 		break;
 	default:
@@ -339,14 +337,14 @@ void StackBasedAssembler::visit(OperatorNode* node)
 
 void StackBasedAssembler::visit(LoopNode* node)
 {
-	size_t begin = mCodes.size();
+	size_t begin = mCurScope->getOffset();
 	node->expr->visit(this);
-	addInstruction(TEST);
+	//addInstruction(TEST);
 	size_t condjmp = addInstruction(JZ,0);
 	node->block->visit(this);
-	addInstruction(JMP,begin);
-	size_t end = mCodes.size();
-	*(int*)(&mCodes[condjmp]) = end;
+	addInstruction(JMP,(Operand)begin);
+	size_t end = mCurScope->getOffset();
+	*(int*)(mCurScope->getCode()->data() + condjmp) = (Operand)end;
 
 }
 
@@ -383,7 +381,7 @@ size_t StackBasedAssembler::visit(ASTNodeList::Ptr list)
 
 size_t StackBasedAssembler::addInstruction(Instruction instr)
 {
-	return addCode(&instr, INSTR_SIZE);
+	return mCurScope->writeCode(&instr, INSTR_SIZE);
 }
 
 size_t StackBasedAssembler::addInstruction(Instruction instr, Operand opra)

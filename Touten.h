@@ -17,11 +17,13 @@ namespace TT
 	{
 	public :
 		bool loadFile(const String& name);
-
+		void call(const String& name);
+		
 		void registerFunction(const String& name, TT_Function func);
 	private:
 		ScopeManager mScopemgr;
-		CPPFunctionTable mFuncTable;
+		StackBasedInterpreter mInterpreter;
+		ConstantPool mConstPool;
 	};
 }
 

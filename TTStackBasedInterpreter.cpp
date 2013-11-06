@@ -97,10 +97,10 @@ StackBasedInterpreter::StackBasedInterpreter()
 	mCaster.cast(mGlobalEnv, OT_ARRAY);
 }
 
-void StackBasedInterpreter::execute(const ConstantPool& constpool, const CPPFunctionTable& functable, const char* codes, size_t offset)
+void StackBasedInterpreter::execute(const ConstantPool& constpool,const char* codes)
 {
 	mCallStack.clear();
-	CallFrame& framebegin = pushCallFrame(offset);
+	CallFrame& framebegin = pushCallFrame(0, 0, false);
 	Object* localenv = &framebegin.localenv;
 	framebegin.sharedenv = localenv;
 	Object* sharedenv = localenv;
@@ -109,7 +109,7 @@ void StackBasedInterpreter::execute(const ConstantPool& constpool, const CPPFunc
 	//FunctionValue* begfunc = (FunctionValue*)constpool[offset];
 
 	auto begin = codes;
-	auto current = begin + offset;//begfunc->codeAddr;
+	auto current = codes;//begfunc->codeAddr;
 	auto getopr = [&current]()->Operand
 	{
 		Operand opr = *(Operand*)current;
@@ -177,9 +177,7 @@ void StackBasedInterpreter::execute(const ConstantPool& constpool, const CPPFunc
 			pushOpr(*(FunctionValue*)(constpool[getopr()]));
 			break;
 		case LOAD_CPP_FUNC:
-			{
-				pushOpr(*functable[getopr()]);
-			}
+			pushOpr(*(FunctionValue*)(constpool[getopr()]));
 			break;
 		case STORE:
 			{
@@ -240,8 +238,9 @@ void StackBasedInterpreter::execute(const ConstantPool& constpool, const CPPFunc
 		case CALL:
 			{
 				const Object& func = getArg(0);
-				size_t argsnum = getopr();
-
+				size_t opr = getopr();
+				size_t argsnum = 0x7fffffff & opr;
+				size_t bret = 0x80000000 & opr;
 				if (func.type != OT_FUNCTION)
 				{
 					popOpr();
@@ -250,12 +249,12 @@ void StackBasedInterpreter::execute(const ConstantPool& constpool, const CPPFunc
 				}
 
 				size_t paraCount = func.val.func.paraCount;
-				size_t codeaddr = func.val.func.codeAddr;
+				Codes* codeaddr = (Codes*)func.val.func.codeAddr;
 				popOpr();
 
 				std::stack<ObjectPtr>& os = mCallStack.top().vars;
-				CallFrame& frame = pushCallFrame(current - begin);
-				current = begin + codeaddr;
+				CallFrame& frame = pushCallFrame(begin, current, bret != 0);
+				begin = current = codeaddr->data();
 
 				int i = argsnum - 1;
 				for ( ; i >=0 ; --i)
@@ -278,7 +277,9 @@ void StackBasedInterpreter::execute(const ConstantPool& constpool, const CPPFunc
 		case CALL_HOST:
 			{
 				const Object& func = getArg(0);
-				size_t argsnum = getopr();
+				size_t opr = getopr();
+				size_t argsnum = 0x7fffffff & opr;
+				size_t bret = 0x80000000 & opr;
 				size_t paraCount = func.val.func.paraCount;
 				TT_Function call = (TT_Function)func.val.func.codeAddr;
 				popOpr();
@@ -297,17 +298,22 @@ void StackBasedInterpreter::execute(const ConstantPool& constpool, const CPPFunc
 				int ret = call( paras , 0);
 				for (int i = 0; i < argsnum; ++i)
 					popOpr();
-
-				pushOpr(callret);
+				if (bret)
+					pushOpr(callret);
 			}
 			break;
 		case RETURN:
 			{
+				CallFrame& old = mCallStack.top();
+				begin = old.beginPos;
+				current = old.curPos;
+				bool bret = old.needret;
 				Object ret;
-				current = begin + popCallFrame(ret);
+				popCallFrame(ret);
 				if (mCallStack.empty())
 					return;
-				mCallStack.top().vars.push(ret);
+				if (bret)
+					mCallStack.top().vars.push(ret);
 
 				CallFrame& frame = mCallStack.top();
 				localenv = &frame.localenv;
@@ -367,26 +373,29 @@ Object& StackBasedInterpreter::pushOpr(Object* obj)
 
 Object& StackBasedInterpreter::pushOpr(const Object& obj)
 {
-	mCallStack.top().vars.push(obj);
-	return *mCallStack.top().vars.top();
+	auto& stk = mCallStack.top().vars;
+	stk.push(obj);
+	return *stk.top();
 }
 
 
-CallFrame& StackBasedInterpreter::pushCallFrame(size_t codepos)
+CallFrame& StackBasedInterpreter::pushCallFrame(const char* begin, const char* current, bool bret)
 {
 	CallFrame& cf = mCallStack.push();
 	//cf.vars.resize(8);
-	cf.beginPos = codepos;
+	cf.beginPos = begin;
+	cf.curPos = current;
+	cf.needret = bret;
 	mCaster.cast(cf.localenv, OT_ARRAY);
 	return cf;
 }
 
-size_t StackBasedInterpreter::popCallFrame(Object& ret)
+void StackBasedInterpreter::popCallFrame(Object& ret)
 {
 	std::stack<ObjectPtr>& os = mCallStack.top().vars;
 
 	size_t retcount = os.size();
-	size_t pos = mCallStack.top().beginPos;
+	//const char* pos = mCallStack.top().beginPos;
 
 	if (retcount == 0)
 	{
@@ -414,7 +423,7 @@ size_t StackBasedInterpreter::popCallFrame(Object& ret)
 		ret.val.arr = arr;
 
 	}
-	return pos;
+	//return pos;
 }
 
 void StackBasedInterpreter::boolOpt(const Object& o1, const Object& o2, Instruction instr, Object& o)

@@ -13,9 +13,11 @@ namespace TT
 	struct CallFrame
 	{
 		std::stack<ObjectPtr> vars;
-		size_t beginPos;
+		const char* beginPos;
+		const char* curPos;
 		Object localenv;
 		Object* sharedenv;
+		bool needret;
 	};
 
 	class CallStack
@@ -42,15 +44,15 @@ namespace TT
 	public :
 		StackBasedInterpreter();
 		
-		void execute(const ConstantPool& cp, const CPPFunctionTable& ft, const char* codes, size_t offset = 0);
+		void execute(const ConstantPool& cp, const char* codes );
 
 	private:
 		void popOpr();
 		Object& pushOpr(Object* obj);
 		Object& pushOpr(const Object& obj);
 
-		CallFrame& pushCallFrame(size_t codepos);
-		size_t popCallFrame(Object& ret);
+		CallFrame& pushCallFrame(const char* begin, const char* current, bool bret);
+		void popCallFrame(Object& ret);
 
 		void compareOpt(const Object& o1, const Object& o2, Instruction instr, Object& o);
 		void normalOpt(const Object& o1, const Object& o2, Instruction instr, Object& o);

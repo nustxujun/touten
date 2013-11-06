@@ -40,7 +40,7 @@ namespace TT
 	{
 		ASTNODE_VISIT_FUNC_DEC;
 	public :
-		Char name[MAX_VAR_NAME_LEN];
+		String name;
 
 	};
 
@@ -74,7 +74,7 @@ namespace TT
 		ASTNODE_VISIT_FUNC_DEC;
 	public :
 		AccessType acctype;
-		Char name[MAX_VAR_NAME_LEN];
+		String name;
 		ASTNodeList::Ptr paras;
 		ASTNode::Ptr body;
 	};
@@ -83,7 +83,7 @@ namespace TT
 	{
 		ASTNODE_VISIT_FUNC_DEC;
 	public :
-		Char name[MAX_VAR_NAME_LEN];
+		String name;
 		ASTNode::Ptr body;
 		AccessType acctype;
 
@@ -115,6 +115,7 @@ namespace TT
 	public:
 		ASTNode::Ptr var;
 		ASTNodeList::Ptr paras;
+		bool needrets;
 	};
 
 	class OperatorNode: public ASTNode

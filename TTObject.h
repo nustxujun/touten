@@ -25,7 +25,7 @@ namespace TT
 
 	struct FunctionValue
 	{
-		size_t codeAddr;
+		void* codeAddr;
 		size_t paraCount;
 	};
 

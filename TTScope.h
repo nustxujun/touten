@@ -7,6 +7,8 @@
 #include "SharedPtr.h"
 namespace TT
 {
+	typedef std::vector<char> Codes;
+
 	class Scope
 	{
 	public :
@@ -22,7 +24,12 @@ namespace TT
 
 		SymbolObj getSymbol(const String& name);
 		Symbol* createSymbol(const String& name, SymbolType st, AccessType at);
+
+		size_t getOffset();
+		Codes* getCode();
+		size_t writeCode(const void* buff, size_t size);
 	private:
+		Codes mCodes;
 		SymbolMap mSymbols;
 		Scope::Ptr mParent;
 	};
