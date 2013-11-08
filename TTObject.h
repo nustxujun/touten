@@ -100,7 +100,7 @@ namespace TT
 		ObjectPtr(const ObjectPtr& obj);
 
 	private:
-
+		void operator=(const ObjectPtr&);
 	private:
 		Object* mInst;
 		bool mAutoDel;
@@ -206,7 +206,7 @@ namespace TT
 
 	};
 
-	typedef int (*TT_Function)(const std::vector<const Object*>& paras, Object* ret);
+	typedef int (*TT_Function)(const ObjectPtr* paras, int paracount, Object* ret);
 
 	static bool compareString(const Char* s1, const Char* s2)
 	{

@@ -9,7 +9,6 @@
 #include "TTParser.h"
 #include "TTStackBasedAssembler.h"
 #include "TTStackBasedInterpreter.h"
-#include "TTCPPFunctionTable.h"
 
 namespace TT
 {

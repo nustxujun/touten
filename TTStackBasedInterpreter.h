@@ -4,7 +4,6 @@
 #include "TTInterpreterCommon.h"
 #include "TTConstantPool.h"
 #include "TTObject.h"
-#include "TTCPPFunctionTable.h"
 #include "TTEnvironment.h"
 #include <stack>
 
@@ -12,7 +11,7 @@ namespace TT
 {
 	struct CallFrame
 	{
-		std::stack<ObjectPtr> vars;
+		std::vector<ObjectPtr> vars;
 		const char* beginPos;
 		const char* curPos;
 		Object localenv;
@@ -48,8 +47,8 @@ namespace TT
 
 	private:
 		void popOpr();
-		Object& pushOpr(Object* obj);
-		Object& pushOpr(const Object& obj);
+		void pushOpr(Object* obj);
+		void pushOpr(const Object& obj);
 
 		CallFrame& pushCallFrame(const char* begin, const char* current, bool bret);
 		void popCallFrame(Object& ret);

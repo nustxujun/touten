@@ -119,7 +119,7 @@ void StackBasedInterpreter::execute(const ConstantPool& constpool,const char* co
 
 	auto getArg = [this](size_t num)->Object&
 	{
-		return **((mCallStack.top().vars._Get_container().end() - 1) - num);
+		return **((mCallStack.top().vars.end() - 1) - num);
 	};
 
 	
@@ -168,7 +168,9 @@ void StackBasedInterpreter::execute(const ConstantPool& constpool,const char* co
 				Operand opr = getopr();
 				size_t size = *(size_t*)(constpool[opr]);
 				const Char* str= (const Char*)(constpool[opr + 4]);
-				Object& obj = pushOpr(Object());
+				pushOpr(Object());
+
+				Object& obj = getArg(0); 
 
 				obj.swap(Object(str, size));//reduce copying
 			}
@@ -244,7 +246,8 @@ void StackBasedInterpreter::execute(const ConstantPool& constpool,const char* co
 				if (func.type != OT_FUNCTION)
 				{
 					popOpr();
-					pushOpr(Object());
+					if (bret)
+						pushOpr(Object());
 					break;
 				}
 
@@ -252,7 +255,7 @@ void StackBasedInterpreter::execute(const ConstantPool& constpool,const char* co
 				Codes* codeaddr = (Codes*)func.val.func.codeAddr;
 				popOpr();
 
-				std::stack<ObjectPtr>& os = mCallStack.top().vars;
+				auto& os = mCallStack.top().vars;
 				CallFrame& frame = pushCallFrame(begin, current, bret != 0);
 				begin = current = codeaddr->data();
 
@@ -261,8 +264,8 @@ void StackBasedInterpreter::execute(const ConstantPool& constpool,const char* co
 				{
 					if (i < paraCount)
 					{
-						pushOpr(*os.top());
-						os.pop();
+						pushOpr(*os.back() );
+						os.pop_back();
 					}
 					
 				}
@@ -283,19 +286,14 @@ void StackBasedInterpreter::execute(const ConstantPool& constpool,const char* co
 				size_t paraCount = func.val.func.paraCount;
 				TT_Function call = (TT_Function)func.val.func.codeAddr;
 				popOpr();
-				//
-				//CallFrame& frame = pushCallFrame(current - begin, mOprStack.size() - argsnum);
-				//int i = argsnum - 1;
-				std::vector<const Object*> paras;
-				paras.reserve(4);
-				std::stack<ObjectPtr>& os = mCallStack.top().vars;
-				auto i = os._Get_container().begin() + (os.size() - argsnum);
-				auto endi = os._Get_container().end();
-				for ( ;i != endi; ++i)
-					paras.push_back( &**i);
 
+				auto& os = mCallStack.top().vars;
+				size_t oprnum = os.size();
+				int realnum = (oprnum < argsnum) ? oprnum : argsnum;
+				auto i = &*(os.begin() + (oprnum - realnum));
+			
 				Object callret ;
-				int ret = call( paras , 0);
+				int ret = call( i , realnum, &callret);
 				for (int i = 0; i < argsnum; ++i)
 					popOpr();
 				if (bret)
@@ -313,7 +311,7 @@ void StackBasedInterpreter::execute(const ConstantPool& constpool,const char* co
 				if (mCallStack.empty())
 					return;
 				if (bret)
-					mCallStack.top().vars.push(ret);
+					pushOpr(ret);
 
 				CallFrame& frame = mCallStack.top();
 				localenv = &frame.localenv;
@@ -362,27 +360,24 @@ void StackBasedInterpreter::execute(const ConstantPool& constpool,const char* co
 
 void StackBasedInterpreter::popOpr()
 {
-	mCallStack.top().vars.pop();
+	mCallStack.top().vars.pop_back();
 }
 
-Object& StackBasedInterpreter::pushOpr(Object* obj)
+void StackBasedInterpreter::pushOpr(Object* obj)
 {
-	mCallStack.top().vars.push(obj);
-	return *mCallStack.top().vars.top();
+	mCallStack.top().vars.push_back(obj);
 }
 
-Object& StackBasedInterpreter::pushOpr(const Object& obj)
+void StackBasedInterpreter::pushOpr(const Object& obj)
 {
-	auto& stk = mCallStack.top().vars;
-	stk.push(obj);
-	return *stk.top();
+	mCallStack.top().vars.push_back(obj);
 }
 
 
 CallFrame& StackBasedInterpreter::pushCallFrame(const char* begin, const char* current, bool bret)
 {
 	CallFrame& cf = mCallStack.push();
-	//cf.vars.resize(8);
+	cf.vars.reserve(8);
 	cf.beginPos = begin;
 	cf.curPos = current;
 	cf.needret = bret;
@@ -392,7 +387,7 @@ CallFrame& StackBasedInterpreter::pushCallFrame(const char* begin, const char* c
 
 void StackBasedInterpreter::popCallFrame(Object& ret)
 {
-	std::stack<ObjectPtr>& os = mCallStack.top().vars;
+	auto& os = mCallStack.top().vars;
 
 	size_t retcount = os.size();
 	//const char* pos = mCallStack.top().beginPos;
@@ -404,7 +399,7 @@ void StackBasedInterpreter::popCallFrame(Object& ret)
 	}
 	else if (retcount == 1)
 	{
-		ret = *os.top();
+		ret = *os.back();
 		mCallStack.pop();
 		//pushOpr(tmp);	
 	}
@@ -413,7 +408,7 @@ void StackBasedInterpreter::popCallFrame(Object& ret)
 		Array* arr = TT_NEW(Array)(false);
 		for (size_t i = 0; !os.empty(); ++i)
 		{
-			*(*arr)[i] = *os.top();
+			*(*arr)[i] = *os.back();
 			popOpr();
 		}
 		
