@@ -60,23 +60,24 @@ void* alloc(void* optr, size_t nsize)
 	return optr ;
 }
 
-int print(const TT::ObjectPtr* paras, int paracount, TT::Object* ret)
+class Print: public TT::Functor
 {
-	TT::Caster caster;
-	for (auto i = 0; i < paracount ; ++i)
-		wprintf(L"%s", caster.castToString(*paras[i])->data);
-	return 1;
-}
+public :
+	void operator()(const TT::ObjectPtr* paras, int paracount, TT::Object* ret)
+	{
+		TT::Caster caster;
+		for (auto i = 0; i < paracount ; ++i)
+			wprintf(L"%s", caster.castToString(*paras[i])->data);
+	}
+}print;
 
 int _tmain(int argc, _TCHAR* argv[])
 {
-	
-
 
 	{
 		TT::MemoryAllocator::setupMethod(alloc);
 		TT::Touten t;
-		t.registerFunction(L"print", print);
+		t.registerFunction(L"print", &print);
 		t.loadFile(L"test2.txt");
 		t.loadFile(L"test.txt");
 		t.call(L"main");
@@ -84,7 +85,7 @@ int _tmain(int argc, _TCHAR* argv[])
 
 	assert(memsize == 0);
 	//_CrtDumpMemoryLeaks();
-	//getchar();
+	getchar();
 	return 0;
 }
 
@@ -148,7 +149,7 @@ bool Touten::loadFile(const String& name)
 	return true;
 }
 
-void Touten::registerFunction(const String& name, TT_Function func)
+void Touten::registerFunction(const String& name, Functor* func)
 {
 	Symbol* sym = mScopemgr.getGlobal()->createSymbol(name, ST_CPP_FUNC, AT_GLOBAL);
 	FunctionValue fv;

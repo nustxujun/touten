@@ -1,7 +1,7 @@
-file ::= { [ global | local ] def [';'] }
+file ::= {  (varlist | [global] function) [';'] }//变量恒为全局
 
 
-def ::=  ( varlist | function | field )
+def ::=  ( varlist | function  )
 
 
 varlist = name [ '=' exp] { ',' name ['=' exp] }
@@ -9,17 +9,10 @@ varlist = name [ '=' exp] { ',' name ['=' exp] }
 
 function ::= 'function' name funcbody
 
-
-field ::= 'filed' name fieldbody
-
-
-fieldbody ::= '{' block '}'
-
-
 block ::= {stat [ ';' ]}
 
 
-stat ::=  loop | cond | (shared | local) def | assgin | fieldbody | funcall | return
+stat ::=  loop | cond | (shared | local) def | assgin | funcall | return
 
 
 return ::= 'return' exp{',' exp}
@@ -40,11 +33,14 @@ args ::= exp{',' exp}
 assgin ::= var '=' exp |
 
 		'[' var { ',' var } ']' '=' exp
+		
 
+constance = null | false | true |
+
+			number | string 
+			
 	 
-exp ::= null | false | true |
-
-		number | string |
+exp ::= constance |
 
 		accessSymbol |
 

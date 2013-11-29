@@ -23,7 +23,6 @@ namespace TT
 		void visit(AssginNode* node);
 		void visit(VarListNode* node);
 		void visit(FunctionNode* node);
-		void visit(FieldNode* node);
 		void visit(BlockNode* node);
 		void visit(ConstNode* node);
 		void visit(FuncCallNode* node);

@@ -578,8 +578,8 @@ void Caster::cast(Object& o, ObjectType otype)
 		castToIntObject(o); break;
 	case OT_FUNCTION:
 		castToFunctionObject(o); break;
-	case OT_FIELD:
-		castToFieldObject(o); break;
+	//case OT_FIELD:
+	//	castToFieldObject(o); break;
 	case OT_ARRAY:
 		castToArrayObject(o); break;
 	default:
@@ -630,7 +630,7 @@ void Caster::castToStringObject(Object& o)
 		str = TT_NEW(TTString)(o.val.i);
 		break;
 	case OT_FUNCTION:
-	case OT_FIELD:
+	//case OT_FIELD:
 	case OT_ARRAY:
 		{
 			o.~Object();
@@ -734,7 +734,7 @@ SharedPtr<TTString> Caster::castToString(const Object& o)
 	{
 	case OT_NULL:	
 	case OT_FUNCTION:
-	case OT_FIELD:
+	//case OT_FIELD:
 		str = new TTString(L"null");
 		break;
 	case OT_ARRAY:

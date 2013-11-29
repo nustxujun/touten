@@ -79,15 +79,15 @@ namespace TT
 		ASTNode::Ptr body;
 	};
 
-	class FieldNode: public ASTNode
-	{
-		ASTNODE_VISIT_FUNC_DEC;
-	public :
-		String name;
-		ASTNode::Ptr body;
-		AccessType acctype;
+	//class FieldNode: public ASTNode
+	//{
+	//	ASTNODE_VISIT_FUNC_DEC;
+	//public :
+	//	String name;
+	//	ASTNode::Ptr body;
+	//	AccessType acctype;
 
-	};
+	//};
 
 	class BlockNode: public ASTNode
 	{
@@ -164,7 +164,6 @@ namespace TT
 		REGISTOR_NODE_VISIT_FUNC(AssginNode);
 		REGISTOR_NODE_VISIT_FUNC(VarListNode);
 		REGISTOR_NODE_VISIT_FUNC(FunctionNode);
-		REGISTOR_NODE_VISIT_FUNC(FieldNode);
 		REGISTOR_NODE_VISIT_FUNC(BlockNode);
 		REGISTOR_NODE_VISIT_FUNC(ConstNode);
 		REGISTOR_NODE_VISIT_FUNC(FuncCallNode);

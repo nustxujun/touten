@@ -10,7 +10,7 @@ namespace TT
 
 	enum SymbolType
 	{
-		ST_FIELD,
+		//ST_FIELD,
 		ST_FUNCTION,
 		ST_VARIABLE,
 		ST_CPP_FUNC,

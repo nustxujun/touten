@@ -22,7 +22,15 @@ ASTNode::Ptr Parser::parseFile(ParserInput* input)
 
 	while(true)
 	{
-		ASTNode::Ptr o = parseDef(input, AT_GLOBAL);
+		Token t = input->lookahead();
+		AccessType ac = AT_LOCAL;
+		switch (t.type)
+		{
+		case TT_GLOBAL: ac = AT_GLOBAL; input->next(); break;
+		case TT_LOCAL: ac = AT_LOCAL; input->next(); break;
+		case TT_NAME: ac = AT_GLOBAL;break;//变量为全局
+		}
+		ASTNode::Ptr o = parseDef(input, ac);
 		if (o.isNull()) return f;
 		last = last->setAndNext(o);
 
@@ -39,9 +47,6 @@ ASTNode::Ptr Parser::parseDef(ParserInput* input, AccessType at)
 	{
 	case TT_FUNCTION:
 		return parseFunction(input, at);
-		break;
-	case TT_FIELD:
-		return parseField(input, at);
 		break;
 	case TT_NAME:
 		return parseVarlist(input, at);
@@ -159,52 +164,15 @@ ASTNode::Ptr Parser::parseFunction(ParserInput* input, AccessType at)
 
 	fn->body = parseBlock(input);
 
-	if (!checkDelimiter(input->next(), '}'))
+	if (!checkDelimiter(input->lookahead(), '}'))
 	{
 		TTPARSER_EXCEPT("need }");
 		return 0;
 	}
+	input->next();
 	return f;
 }
 
-ASTNode::Ptr Parser::parseField(ParserInput* input, AccessType at)
-{
-	Token t = input->next();
-	FieldNode* fn = new FieldNode();
-	ASTNode::Ptr f = fn;
-	fn->acctype = at;
-
-	if (t.type == TT_FIELD)
-	{
-		t = input->next();
-		if (t.type != TT_NAME)
-		{
-			TTPARSER_EXCEPT("field need name");
-			return 0;
-		}
-		fn->name = String(t.string, t.size);
-		t = input->next();
-	}
-
-	if (!checkDelimiter(t, '{' ))
-	{
-		TTPARSER_EXCEPT("need function body");
-		return 0;
-	}
-
-	fn->body = parseBlock(input);
-
-	if (fn->body.isNull())
-		return 0;
-
-	if (!checkDelimiter(t, '}'))
-	{
-		TTPARSER_EXCEPT("need }");
-		return 0;
-	}
-	return f;
-
-}
 
 ASTNode::Ptr Parser::parseBlock(ParserInput* input)
 {
@@ -228,6 +196,7 @@ ASTNode::Ptr Parser::parseBlock(ParserInput* input)
 	
 	return b;
 }
+
 
 ASTNode::Ptr Parser::parseStat(ParserInput* input)
 {
@@ -261,10 +230,10 @@ ASTNode::Ptr Parser::parseStat(ParserInput* input)
 
 		}
 		break;
-	case TT_DELIMITER://field
+	case TT_DELIMITER:
 		{		
-			if (checkDelimiter(t, '{'))
-				return parseField(input, AT_LOCAL);
+			//if (checkDelimiter(t, '{'))
+			//	return parseField(input, AT_LOCAL);
 			if (checkDelimiter(t, '['))
 				return parseAssgin(input);
 			else if ( checkDelimiter(t,'}'))
@@ -299,10 +268,10 @@ ASTNode::Ptr Parser::parseStat(ParserInput* input)
 	return 0;
 }
 
-ASTNode::Ptr Parser::parseVar(ParserInput* input)
+ASTNode::Ptr Parser::parseVar(ParserInput* input, AccessType deftype)
 {
 	Token name = input->next();
-	AccessType at = AT_LOCAL;
+	AccessType at = deftype;
 	switch (name.type)
 	{
 	case TT_PRE_GL: at = AT_GLOBAL; name = input->next(); break;
@@ -400,8 +369,8 @@ ASTNode::Ptr Parser::parseExpr(ParserInput* input,  BinopStack* stack)
 					return 0;
 				}
 			}
-			else if (checkDelimiter(look, '{'))
-				expr = parseField(input, AT_LOCAL);
+			//else if (checkDelimiter(look, '{'))
+			//	expr = parseField(input, AT_LOCAL);
 			
 			TTPARSER_EXCEPT("unexpected token");
 			return 0;

@@ -3,6 +3,7 @@
 
 #include "ToutenCommon.h"
 #include "SharedPtr.h"
+#include <functional>
 
 #define OBJECT_STACK_SIZE 1
 
@@ -17,7 +18,7 @@ namespace TT
 		OT_DOUBLE,
 		OT_INTEGER,
 		OT_FUNCTION,
-		OT_FIELD,
+		//OT_FIELD,
 		OT_ARRAY,
 
 		OT_NUM
@@ -206,7 +207,13 @@ namespace TT
 
 	};
 
-	typedef int (*TT_Function)(const ObjectPtr* paras, int paracount, Object* ret);
+	class Functor
+	{
+	public :
+		virtual void operator()(const ObjectPtr* paras, int paracount, Object* ret) = 0;
+	};
+
+	//typedef int (*TT_Function)(const ObjectPtr* paras, int paracount, Object* ret);
 
 	static bool compareString(const Char* s1, const Char* s2)
 	{

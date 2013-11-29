@@ -27,7 +27,7 @@ namespace TT
 		TT_LOCAL,
 		TT_SHARED,
 		TT_FUNCTION,
-		TT_FIELD,
+		//TT_FIELD,
 		TT_WHILE,
 		TT_DO,
 		TT_FOR,

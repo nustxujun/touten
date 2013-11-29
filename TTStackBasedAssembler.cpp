@@ -78,13 +78,16 @@ void StackBasedAssembler::visit(VarNode* node)
 		case ST_CPP_FUNC:
 			addInstruction(LOAD_CPP_FUNC, mCurSymbol->addrOffset);break;
 		case ST_FUNCTION:
-		case ST_FIELD:
 			{
 				size_t addr = addInstruction(LOAD_FUNC, mCurSymbol->addrOffset);
 				if (!mCurSymbol->isdefine)
 					addbackfill(mCurSymbol, addr );
 			}
 			break;
+		default:
+			{
+				TTSBASSEMBLER_EXCPET("Unknown type");
+			}
 		}
 	}
 	else
@@ -113,11 +116,14 @@ void StackBasedAssembler::visit(VarNode* node)
 		}
 		else
 		{
-			mCurSymbol = mScopeMgr.getGlobal()->createSymbol(mCurName,ST_FUNCTION, AT_GLOBAL);
-			mCurSymbol->isdefine = false;
+			TTSBASSEMBLER_EXCPET("undefined symbol");
+			//考虑到在这里无法分清是哪层空间的符号，所以不予回填
 
-			size_t addr = addInstruction(LOAD_FUNC, -1);//temp
-			addbackfill(mCurSymbol, addr );
+			//mCurSymbol = mScopeMgr.getGlobal()->createSymbol(mCurName,ST_FUNCTION, AT_GLOBAL);
+			//mCurSymbol->isdefine = false;
+
+			//size_t addr = addInstruction(LOAD_FUNC, -1);//temp
+			//addbackfill(mCurSymbol, addr );
 		}
 	
 	}	
@@ -167,10 +173,12 @@ void StackBasedAssembler::visit(FunctionNode* node)
 		if (sym.sym->symtype != ST_FUNCTION)
 		{
 			TTSBASSEMBLER_EXCPET("same name existed");
+			return;
 		}
 		else if ( sym.sym->isdefine)
 		{
 			TTSBASSEMBLER_EXCPET("function is defined");
+			return;
 		}
 		sym.sym->symtype = ST_FUNCTION;
 	}
@@ -185,9 +193,22 @@ void StackBasedAssembler::visit(FunctionNode* node)
 		}
 		else
 		{
-
-			sym.sym = mScopeMgr.getGlobal()->createSymbol(
-				node->name, ST_FUNCTION, AT_GLOBAL);
+			Scope::Ptr scope = mCurScope;
+			switch (node->acctype)
+			{
+			case AT_DEFAULT:
+			case AT_LOCAL:
+				break;
+			case AT_GLOBAL:
+				scope = mScopeMgr.getGlobal();
+				break;
+			default:
+				TTSBASSEMBLER_EXCPET("unknown type");
+			}
+			sym.sym = scope->createSymbol(
+				node->name, ST_FUNCTION, node->acctype);
+			//sym.sym = mScopeMgr.getGlobal()->createSymbol(
+			//	node->name, ST_FUNCTION, AT_GLOBAL);
 		}
 	}
 	
@@ -229,37 +250,6 @@ void StackBasedAssembler::visit(FunctionNode* node)
 
 	if (anonymous)
 		addInstruction(LOAD_FUNC, sym.sym->addrOffset);
-}
-
-void StackBasedAssembler::visit(FieldNode* node)
-{
-	auto sym = mCurScope->getSymbol(node->name);
-
-	if (!sym.sym  )
-	{
-		if (sym.sym->symtype != ST_FIELD)
-		{
-			TTSBASSEMBLER_EXCPET("same name existed");
-		}
-		else if ( sym.sym->isdefine)
-		{
-			TTSBASSEMBLER_EXCPET("field is defined");
-		}
-		sym.sym->symtype = ST_FIELD;
-	}
-	else
-	{
-		sym.sym = mScopeMgr.getGlobal()->createSymbol(
-			node->name, ST_FUNCTION, AT_LOCAL);
-	}
-	//sym->ex = mInstruction;
-	//sym->isdefine = true;
-
-	//mCurScope = mScopeMgr.enterScope();
-
-	//node->body->visit(this);
-
-	//mCurScope = mScopeMgr.leaveScope();
 }
 
 

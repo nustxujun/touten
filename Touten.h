@@ -18,7 +18,7 @@ namespace TT
 		bool loadFile(const String& name);
 		void call(const String& name);
 		
-		void registerFunction(const String& name, TT_Function func);
+		void registerFunction(const String& name, Functor* func);
 	private:
 		ScopeManager mScopemgr;
 		StackBasedInterpreter mInterpreter;

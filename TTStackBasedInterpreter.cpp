@@ -284,7 +284,7 @@ void StackBasedInterpreter::execute(const ConstantPool& constpool,const char* co
 				size_t argsnum = 0x7fffffff & opr;
 				size_t bret = 0x80000000 & opr;
 				size_t paraCount = func.val.func.paraCount;
-				TT_Function call = (TT_Function)func.val.func.codeAddr;
+				Functor* call = (Functor*)func.val.func.codeAddr;
 				popOpr();
 
 				auto& os = mCallStack.top().vars;
@@ -293,7 +293,7 @@ void StackBasedInterpreter::execute(const ConstantPool& constpool,const char* co
 				auto i = &*(os.begin() + (oprnum - realnum));
 			
 				Object callret ;
-				int ret = call( i , realnum, &callret);
+				(*call)( i , realnum, &callret);
 				for (int i = 0; i < argsnum; ++i)
 					popOpr();
 				if (bret)
@@ -483,7 +483,7 @@ void StackBasedInterpreter::compareOpt(const Object& o1, const Object& o2, Instr
 
 	bool ret = false;
 
-	if (type[OT_NULL] || type[OT_FUNCTION] || type[OT_FIELD])
+	if (type[OT_NULL] || type[OT_FUNCTION] /*|| type[OT_FIELD]*/)
 	{
 		o.type = OT_NULL;
 	}
@@ -514,7 +514,7 @@ void StackBasedInterpreter::normalOpt(const Object& o1, const Object& o2, Instru
 	type[o1.type] = true;
 	type[o2.type] = true;
 
-	if (type[OT_NULL] || type[OT_FUNCTION] || type[OT_FIELD])
+	if (type[OT_NULL] || type[OT_FUNCTION] /*|| type[OT_FIELD]*/)
 	{
 		o.type = OT_NULL;
 	}

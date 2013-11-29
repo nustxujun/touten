@@ -415,12 +415,12 @@ bool Lexer::getString(const Char*& read, Token& token)
 
 bool Lexer::getReserved(const Char*& read, Token& token)
 {
-	const Char* reserved[] = {
+	const Char* reserved[] = {//顺序和枚举关联
 		L"global", 
 		L"local", 
 		L"shared",
 		L"function",
-		L"field",
+		//L"field",
 		L"while",
 		L"do",
 		L"for",

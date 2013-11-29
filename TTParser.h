@@ -30,13 +30,12 @@ namespace TT
 		ASTNode::Ptr parseFile(ParserInput* input);
 		ASTNode::Ptr parseDef(ParserInput* input, AccessType at);
 		ASTNode::Ptr parseVarlist(ParserInput* input, AccessType at );
-		ASTNode::Ptr parseField(ParserInput* input, AccessType at );
 		ASTNode::Ptr parseFunction(ParserInput* input, AccessType at );
 		ASTNode::Ptr parseBlock(ParserInput* input);
 		ASTNode::Ptr parseStat(ParserInput* input);
 		ASTNode::Ptr parseLoop(ParserInput* input);
 		ASTNode::Ptr parseCond(ParserInput* input);
-		ASTNode::Ptr parseVar(ParserInput* input);
+		ASTNode::Ptr parseVar(ParserInput* input, AccessType deftype = AT_LOCAL);
 		ASTNode::Ptr parseAssgin(ParserInput* input, ASTNode::Ptr pre = 0);
 		ASTNode::Ptr parseUnop(ParserInput* input);
 		ASTNode::Ptr parseFuncCall(ParserInput* input, bool needret, ASTNode::Ptr pre = 0);
