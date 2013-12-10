@@ -6,6 +6,7 @@
 #include <algorithm>
 #include <string>
 #include <map>
+#include <hash_map>
 #include <vector>
 #include <set>
 namespace TT

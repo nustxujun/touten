@@ -5,6 +5,7 @@
 #include "TTConstantPool.h"
 #include "TTObject.h"
 #include "TTEnvironment.h"
+#include "TTCaster.h"
 #include <stack>
 
 namespace TT
@@ -43,7 +44,7 @@ namespace TT
 	public :
 		StackBasedInterpreter();
 		
-		void execute(const ConstantPool& cp, const char* codes );
+		void execute(const ConstantPool& cp, const char* codes, size_t parasCount, const ObjectPtr* paras, Object* obj);
 
 	private:
 		void popOpr();
@@ -61,7 +62,6 @@ namespace TT
 
 		CallStack mCallStack;
 		Object mGlobalEnv;
-		Caster mCaster;
 	};
 
 

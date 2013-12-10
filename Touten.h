@@ -1,9 +1,8 @@
 #ifndef _Touten_H_
 #define _Touten_H_
 
-
-
 #include "ToutenCommon.h"
+#include "TTCaster.h"
 #include "TTStaticArea.h"
 #include "TTLexer.h"
 #include "TTParser.h"
@@ -16,7 +15,7 @@ namespace TT
 	{
 	public :
 		bool loadFile(const String& name);
-		void call(const String& name);
+		void call(const String& name, size_t parasCount = 0, const ObjectPtr* paras = nullptr, Object* ret = nullptr);
 		
 		void registerFunction(const String& name, Functor* func);
 	private:

@@ -3,11 +3,11 @@
 
 #include "stdafx.h"
 #include "Touten.h"
+#include "TTBind.h"
 #include <fstream>
 #include <vector>
 #include "TTObject.h"
 #include "TTMemoryAllocator.h"
-
 
 //#define MEM_DEBUG
 
@@ -60,27 +60,25 @@ void* alloc(void* optr, size_t nsize)
 	return optr ;
 }
 
-class Print: public TT::Functor
+
+void Print(int a,double b, bool c)
 {
-public :
-	void operator()(const TT::ObjectPtr* paras, int paracount, TT::Object* ret)
-	{
-		TT::Caster caster;
-		for (auto i = 0; i < paracount ; ++i)
-			wprintf(L"%s", caster.castToString(*paras[i])->data);
-	}
-}print;
+		wprintf(L"%d %f %d",a,b,c);
+}
+
+#include "TTFunction.h"
 
 int _tmain(int argc, _TCHAR* argv[])
 {
-
 	{
 		TT::MemoryAllocator::setupMethod(alloc);
 		TT::Touten t;
-		t.registerFunction(L"print", &print);
+		TT::Bind b(&t);
+		b.bind(L"print", &Print);
 		t.loadFile(L"test2.txt");
 		t.loadFile(L"test.txt");
-		t.call(L"main");
+		//t.call(L"main");
+		int a = b.call<int>(L"f1", (int)3, (float)2, true);
 	}
 
 	assert(memsize == 0);
@@ -158,13 +156,13 @@ void Touten::registerFunction(const String& name, Functor* func)
 	sym->addrOffset =  mConstPool << fv;
 }
 
-void Touten::call(const String& name)
+void Touten::call(const String& name, size_t parasCount, const ObjectPtr* paras, Object* ret)
 {
 	Scope::SymbolObj sym = mScopemgr.getGlobal()->getSymbol(name);
 	if (sym.sym == 0 || sym.sym->symtype != ST_FUNCTION) return ;
 
 	TT::FunctionValue* begin = (FunctionValue*)mConstPool[sym.sym->addrOffset];
-	mInterpreter.execute(mConstPool, ((Codes*)begin->codeAddr)->data());
+	mInterpreter.execute(mConstPool, ((Codes*)begin->codeAddr)->data(), std::min(begin->paraCount, parasCount), paras, ret);
 
 
 }

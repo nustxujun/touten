@@ -94,10 +94,10 @@ bool CallStack::empty()const
 
 StackBasedInterpreter::StackBasedInterpreter()
 {
-	mCaster.cast(mGlobalEnv, OT_ARRAY);
+	Caster::cast(mGlobalEnv, OT_ARRAY);
 }
 
-void StackBasedInterpreter::execute(const ConstantPool& constpool,const char* codes)
+void StackBasedInterpreter::execute(const ConstantPool& constpool, const char* codes, size_t parasCount, const ObjectPtr* paras, Object* callret)
 {
 	mCallStack.clear();
 	CallFrame& framebegin = pushCallFrame(0, 0, false);
@@ -105,6 +105,14 @@ void StackBasedInterpreter::execute(const ConstantPool& constpool,const char* co
 	framebegin.sharedenv = localenv;
 	Object* sharedenv = localenv;
 	Object* curenv = 0;
+
+	if (parasCount != 0)
+	{
+		for (size_t i = 0; i < parasCount; ++i)
+		{
+			pushOpr(*paras[i]);
+		}
+	}
 	
 	//FunctionValue* begfunc = (FunctionValue*)constpool[offset];
 
@@ -223,7 +231,7 @@ void StackBasedInterpreter::execute(const ConstantPool& constpool,const char* co
 
 				curenv = &obj;
 
-				mCaster.cast(obj, OT_ARRAY);
+				Caster::cast(obj, OT_ARRAY);
 			
 				Object* elem ;
 				if (index.type == OT_STRING)
@@ -259,15 +267,20 @@ void StackBasedInterpreter::execute(const ConstantPool& constpool,const char* co
 				CallFrame& frame = pushCallFrame(begin, current, bret != 0);
 				begin = current = codeaddr->data();
 
-				int i = argsnum - 1;
-				for ( ; i >=0 ; --i)
+				size_t maxcount = std::max(paraCount, argsnum);
+				size_t pc = maxcount - paraCount;
+				size_t an = maxcount - argsnum;
+				for (size_t i = 0; i < maxcount; ++i)
 				{
-					if (i < paraCount)
+					if (i < pc)
+						os.pop_back();
+					else if (i < an)
+						pushOpr(Object());
+					else
 					{
-						pushOpr(*os.back() );
+						pushOpr(*os.back());
 						os.pop_back();
 					}
-					
 				}
 					
 				localenv = &frame.localenv;
@@ -309,7 +322,11 @@ void StackBasedInterpreter::execute(const ConstantPool& constpool,const char* co
 				Object ret;
 				popCallFrame(ret);
 				if (mCallStack.empty())
+				{
+					if (callret)
+						*callret = ret;
 					return;
+				}
 				if (bret)
 					pushOpr(ret);
 
@@ -318,21 +335,21 @@ void StackBasedInterpreter::execute(const ConstantPool& constpool,const char* co
 				sharedenv = frame.sharedenv;
 			}
 			break;
-		case RETURN_ARRAY:
-			{
-				assert(0);
-			}
-			break;
-		case TEST:
-			{
-				
-			}
-			break;
+		//case RETURN_ARRAY:
+		//	{
+		//		assert(0);
+		//	}
+		//	break;
+		//case TEST:
+		//	{
+		//		
+		//	}
+		//	break;
 		case JZ:
 			{
 				size_t jumpos = getopr();
 				const Object& obj = getArg(0);
-				if (!mCaster.castToBool(obj))
+				if (!Caster::castToBool(obj))
 					current = begin + jumpos;
 				popOpr();
 
@@ -353,6 +370,8 @@ void StackBasedInterpreter::execute(const ConstantPool& constpool,const char* co
 			break;
 		case HALT:
 			return;
+		default:
+			assert(0);
 		}
 	}
 
@@ -381,7 +400,7 @@ CallFrame& StackBasedInterpreter::pushCallFrame(const char* begin, const char* c
 	cf.beginPos = begin;
 	cf.curPos = current;
 	cf.needret = bret;
-	mCaster.cast(cf.localenv, OT_ARRAY);
+	Caster::cast(cf.localenv, OT_ARRAY);
 	return cf;
 }
 
@@ -426,8 +445,8 @@ void StackBasedInterpreter::boolOpt(const Object& o1, const Object& o2, Instruct
 	bool ret = false;
 	switch (instr)
 	{
-	case DAND:	ret = mCaster.castToInt(o1) && mCaster.castToInt(o2); break;
-	case DOR:	ret = mCaster.castToInt(o1) || mCaster.castToInt(o2); break;
+	case DAND:	ret = Caster::castToInt(o1) && Caster::castToInt(o2); break;
+	case DOR:	ret = Caster::castToInt(o1) || Caster::castToInt(o2); break;
 	}
 
 	o.type = ret ? OT_TRUE: OT_FALSE;
@@ -464,7 +483,7 @@ void StackBasedInterpreter::autoOpt(const Object& o1, const Object& o2, Instruct
 	case XOR:
 		{
 			o.type = OT_INTEGER;
-			INT_OPT(mCaster.castToInt(o1), mCaster.castToInt(o2), instr, o.val.i);
+			INT_OPT(Caster::castToInt(o1), Caster::castToInt(o2), instr, o.val.i);
 		}
 	}
 
@@ -493,11 +512,11 @@ void StackBasedInterpreter::compareOpt(const Object& o1, const Object& o2, Instr
 	}
 	else if (type[OT_DOUBLE])
 	{
-		CMP_OPT(mCaster.castToReal(o1), mCaster.castToReal(o2), instr, ret);
+		CMP_OPT(Caster::castToReal(o1), Caster::castToReal(o2), instr, ret);
 	}
 	else if (type[OT_INTEGER] || type[OT_TRUE] || type[OT_FALSE])
 	{
-		CMP_OPT(mCaster.castToInt(o1), mCaster.castToInt(o2), instr, ret);
+		CMP_OPT(Caster::castToInt(o1), Caster::castToInt(o2), instr, ret);
 	}
 	else
 	{
@@ -525,12 +544,12 @@ void StackBasedInterpreter::normalOpt(const Object& o1, const Object& o2, Instru
 	else if (type[OT_DOUBLE])
 	{
 		o.type = OT_DOUBLE;
-		BASE_OPT(mCaster.castToReal(o1), mCaster.castToReal(o2), instr, o.val.d);
+		BASE_OPT(Caster::castToReal(o1), Caster::castToReal(o2), instr, o.val.d);
 	}
 	else if (type[OT_INTEGER] || type[OT_TRUE] || type[OT_FALSE])
 	{
 		o.type = OT_INTEGER;
-		BASE_OPT(mCaster.castToInt(o1), mCaster.castToInt(o2), instr, o.val.i);
+		BASE_OPT(Caster::castToInt(o1), Caster::castToInt(o2), instr, o.val.i);
 	}
 	else
 	{

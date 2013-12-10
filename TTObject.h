@@ -181,32 +181,6 @@ namespace TT
 	};
 
 
-	class Caster
-	{
-	public:
-		void cast(Object& o, ObjectType otype);
-
-
-		bool castToBool(const Object& o);
-		SharedPtr<TTString> castToString(const Object& o);
-		double castToReal(const Object& o);
-		int castToInt(const Object& o);
-
-	private:
-		void castToNullObject(Object& o);
-		void castToBoolObject(Object& o);
-		void castToStringObject(Object& o);
-		void castToRealObject(Object& o);
-		void castToIntObject(Object& o);
-		void castToFunctionObject(Object& o);
-		void castToFieldObject(Object& o);
-		void castToArrayObject(Object& o);
-
-		template<class Type>
-		Type cast(const Object& o);
-
-	};
-
 	class Functor
 	{
 	public :

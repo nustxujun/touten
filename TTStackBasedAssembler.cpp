@@ -226,6 +226,7 @@ void StackBasedAssembler::visit(FunctionNode* node)
 			mCurSymbol = mCurScope->createSymbol(mCurName, ST_VARIABLE, AT_LOCAL);
 			mCurSymbol->isdefine = true;
 			addInstruction(LOAD_STRING, stringToConstPool(mCurName.c_str()));
+			addInstruction(LOAD_LOCAL);
 			addInstruction(STORE);
 		}
 		else
