@@ -26,8 +26,16 @@ namespace TT
 
 	struct FunctionValue
 	{
+		enum
+		{
+			PARA_COUNT = 0xffff,
+
+			IS_CPP_FUNC = 0x40000000,
+			NEED_RETURN = 0x80000000,
+		};
+
 		void* codeAddr;
-		size_t paraCount;
+		size_t funcinfo;
 	};
 
 	struct StringValue

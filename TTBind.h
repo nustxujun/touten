@@ -60,6 +60,20 @@ namespace TT
 			mTT->call(name, sizeof...(Args), paras);
 		}
 
+		template<class R>
+		typename std::enable_if<!std::is_void<R>::value, R>::type call(const String& name)
+		{
+			Object ret;
+			mTT->call(name, 0, nullptr, &ret);
+			return Caster::cast<R>(ret);
+		}
+
+		template<class R>
+		typename std::enable_if<std::is_void<R>::value, R>::type call(const String& name)
+		{
+			mTT->call(name);
+		}
+
 	private:
 		Touten* mTT;
 

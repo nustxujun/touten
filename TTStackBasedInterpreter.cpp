@@ -249,8 +249,8 @@ void StackBasedInterpreter::execute(const ConstantPool& constpool, const char* c
 			{
 				const Object& func = getArg(0);
 				size_t opr = getopr();
-				size_t argsnum = 0x7fffffff & opr;
-				size_t bret = 0x80000000 & opr;
+				size_t argsnum = FunctionValue::PARA_COUNT & opr;
+				size_t bret = FunctionValue::NEED_RETURN & opr;
 				if (func.type != OT_FUNCTION)
 				{
 					popOpr();
@@ -259,58 +259,62 @@ void StackBasedInterpreter::execute(const ConstantPool& constpool, const char* c
 					break;
 				}
 
-				size_t paraCount = func.val.func.paraCount;
-				Codes* codeaddr = (Codes*)func.val.func.codeAddr;
-				popOpr();
+				size_t paraCount = FunctionValue::PARA_COUNT & func.val.func.funcinfo;
 
-				auto& os = mCallStack.top().vars;
-				CallFrame& frame = pushCallFrame(begin, current, bret != 0);
-				begin = current = codeaddr->data();
-
-				size_t maxcount = std::max(paraCount, argsnum);
-				size_t pc = maxcount - paraCount;
-				size_t an = maxcount - argsnum;
-				for (size_t i = 0; i < maxcount; ++i)
+				if (FunctionValue::IS_CPP_FUNC & func.val.func.funcinfo)//c++ function
 				{
-					if (i < pc)
-						os.pop_back();
-					else if (i < an)
-						pushOpr(Object());
-					else
-					{
-						pushOpr(*os.back());
-						os.pop_back();
-					}
-				}
-					
-				localenv = &frame.localenv;
-				frame.sharedenv = sharedenv;
-				sharedenv = curenv;
-				curenv = 0;
-			}
+					Functor* call = (Functor*)func.val.func.codeAddr;
+					popOpr();
 
+					auto& os = mCallStack.top().vars;
+					size_t oprnum = os.size();
+					int realnum = (oprnum < argsnum) ? oprnum : argsnum;
+					auto i = &*(os.begin() + (oprnum - realnum));
+
+					Object callret;
+					(*call)(i, realnum, &callret);
+					for (int i = 0; i < argsnum; ++i)
+						popOpr();
+					if (bret)
+						pushOpr(callret);
+				}
+				else
+				{
+					Codes* codeaddr = (Codes*)func.val.func.codeAddr;
+					popOpr();
+
+					auto& os = mCallStack.top().vars;
+					CallFrame& frame = pushCallFrame(begin, current, bret != 0);
+					begin = current = codeaddr->data();
+
+					size_t maxcount = std::max(paraCount, argsnum);
+					size_t pc = maxcount - paraCount;
+					size_t an = maxcount - argsnum;
+					for (size_t i = 0; i < maxcount; ++i)
+					{
+						if (i < pc)
+							os.pop_back();
+						else if (i < an)
+							pushOpr(Object());
+						else
+						{
+							pushOpr(*os.back());
+							os.pop_back();
+						}
+					}
+
+					localenv = &frame.localenv;
+					frame.sharedenv = sharedenv;
+					sharedenv = curenv;
+					curenv = 0;
+				}
+
+			}
 			break;
 		case CALL_HOST:
 			{
-				const Object& func = getArg(0);
-				size_t opr = getopr();
-				size_t argsnum = 0x7fffffff & opr;
-				size_t bret = 0x80000000 & opr;
-				size_t paraCount = func.val.func.paraCount;
-				Functor* call = (Functor*)func.val.func.codeAddr;
-				popOpr();
+				assert(0);
 
-				auto& os = mCallStack.top().vars;
-				size_t oprnum = os.size();
-				int realnum = (oprnum < argsnum) ? oprnum : argsnum;
-				auto i = &*(os.begin() + (oprnum - realnum));
-			
-				Object callret ;
-				(*call)( i , realnum, &callret);
-				for (int i = 0; i < argsnum; ++i)
-					popOpr();
-				if (bret)
-					pushOpr(callret);
 			}
 			break;
 		case RETURN:

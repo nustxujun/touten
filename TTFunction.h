@@ -13,7 +13,7 @@ namespace TT
 	public:
 		void operator()(const ObjectPtr* paras, int paracount, Object* ret)
 		{
-			assert(sizeof...(Args) <= paracount);//需要抛异常
+			assert(sizeof...(Args) <= paracount);//脚本中的需要抛异常
 			std::tuple<Args...> t;
 			ArgsConverter<Args...>::convert<sizeof...(Args)-1>(t, paras);
 

@@ -75,10 +75,11 @@ int _tmain(int argc, _TCHAR* argv[])
 		TT::Touten t;
 		TT::Bind b(&t);
 		b.bind(L"print", &Print);
-		t.loadFile(L"test2.txt");
+		//t.loadFile(L"test2.txt");
 		t.loadFile(L"test.txt");
 		//t.call(L"main");
 		int a = b.call<int>(L"f1", (int)3, (float)2, true);
+		b.call<void>(L"main");
 	}
 
 	assert(memsize == 0);
@@ -152,7 +153,7 @@ void Touten::registerFunction(const String& name, Functor* func)
 	Symbol* sym = mScopemgr.getGlobal()->createSymbol(name, ST_CPP_FUNC, AT_GLOBAL);
 	FunctionValue fv;
 	fv.codeAddr = func;
-	fv.paraCount = 0;
+	fv.funcinfo = FunctionValue::IS_CPP_FUNC;
 	sym->addrOffset =  mConstPool << fv;
 }
 
@@ -162,7 +163,8 @@ void Touten::call(const String& name, size_t parasCount, const ObjectPtr* paras,
 	if (sym.sym == 0 || sym.sym->symtype != ST_FUNCTION) return ;
 
 	TT::FunctionValue* begin = (FunctionValue*)mConstPool[sym.sym->addrOffset];
-	mInterpreter.execute(mConstPool, ((Codes*)begin->codeAddr)->data(), std::min(begin->paraCount, parasCount), paras, ret);
+	mInterpreter.execute(mConstPool, ((Codes*)begin->codeAddr)->data(), 
+		std::min(begin->funcinfo & FunctionValue::PARA_COUNT , parasCount), paras, ret);
 
 
 }

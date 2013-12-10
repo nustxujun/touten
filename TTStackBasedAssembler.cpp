@@ -239,7 +239,7 @@ void StackBasedAssembler::visit(FunctionNode* node)
 	}
 
 	FunctionValue fv;
-	fv.paraCount = count;
+	fv.funcinfo = count;
 	fv.codeAddr = mCurScope->getCode();
 
 	sym.sym->addrOffset = mConstPool << fv;
@@ -300,15 +300,11 @@ void StackBasedAssembler::visit(FuncCallNode* node)
 	{
 	case ST_VARIABLE:
 	case ST_FUNCTION:
+	case ST_CPP_FUNC:
 		{
 			//stack desc:[before] --> [after]
 			//paras funcname callinstr argsnum --> paras
-			addInstruction(CALL, argsnum | (node->needrets << 31));
-		}
-		break;
-	case ST_CPP_FUNC:
-		{
-			addInstruction(CALL_HOST, argsnum | (node->needrets << 31));
+			addInstruction(CALL, argsnum | (node->needrets? FunctionValue::NEED_RETURN : 0));
 		}
 		break;
 	default:
