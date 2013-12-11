@@ -2,11 +2,8 @@
 #define _Touten_H_
 
 #include "ToutenCommon.h"
-#include "TTCaster.h"
-#include "TTStaticArea.h"
-#include "TTLexer.h"
-#include "TTParser.h"
-#include "TTStackBasedAssembler.h"
+
+#include "TTScope.h"
 #include "TTStackBasedInterpreter.h"
 
 namespace TT

@@ -6,6 +6,8 @@
 #include "TTScope.h"
 #include "TTConstantPool.h"
 #include "TTInterpreterCommon.h"
+#include "TTStackBasedAssembler.h"
+
 namespace TT
 {
 	static const Char* GLOBAL_INIT_FUNC = L"__initGlobal";

@@ -12,10 +12,10 @@ namespace TT
 		static void cast(Object& o, ObjectType otype);
 
 		static bool castToBool(const Object& o);
-		static SharedPtr<TTString> castToString(const Object& o);
+		//static SharedPtr<TTString> castToString(const Object& o);
 		static double castToReal(const Object& o);
 		static int castToInt(const Object& o);
-
+		static String castToString(const Object& o);
 		template<class Type>
 		static Type cast(const Object& o)
 		{
@@ -26,7 +26,8 @@ namespace TT
 		template<> static int cast(const Object& o){ return castToInt(o); }
 		template<> static double cast(const Object& o){ return castToReal(o); }
 		template<> static bool cast(const Object& o){ return castToBool(o); }
-		template<> static SharedPtr<TTString> cast(const Object& o){ return castToString(o); }
+		//template<> static SharedPtr<TTString> cast(const Object& o){ return castToString(o); }
+		template<> static String cast(const Object& o){ return castToString(o); }
 			
 
 	private:

@@ -15,26 +15,19 @@ TTString::TTString(size_t count)
 TTString::TTString(const StringValue& sv)
 {
 	numChar = sv.size ;
-	data = (Char*)TT_MALLOC(numChar * sizeof(Char));
-	memcpy(data, sv.cont, numChar* sizeof(Char));
+	data = Tools::cloneString(sv.cont, numChar);
 }
 
 TTString::TTString(const Char* str)
 {
-	size_t len = 1;
-	const Char* h = str;
-	while(*h++ != 0) ++len;
-	numChar = len ;
-	data = (Char*)TT_MALLOC(numChar * sizeof(Char));
-	memcpy(data, str, numChar* sizeof(Char));
+	data = Tools::cloneString(str, &numChar);
 }
 
 TTString::TTString(int i)
 {
 	String tmp = Tools::toString(i);
-	data = (Char*)TT_MALLOC((tmp.size() + 1) * sizeof(Char));
-		
-	memcpy(data, tmp.c_str(), (tmp.size() + 1) * sizeof(Char));
+	numChar = tmp.size() + 1;
+	data = Tools::cloneString(tmp.c_str(), numChar);
 }
 
 TTString::TTString(double d)
@@ -51,17 +44,17 @@ TTString::~TTString()
 
 bool TTString::operator==(const Char* str)
 {
-	return compareString(data, str);
+	return !Tools::less(data, str) && !Tools::less(str, data);
 }
 
 bool TTString::operator==(const TTString& str)
 {
-	return compareString(data, str.data);
+	return !Tools::less(data, str.data) && !Tools::less(str.data, data);
 }
 
 TTString::operator bool()const
 {
-	return compareString(data, L"true");
+	return !Tools::less(data, L"true") && !Tools::less(L"true", data);
 }
 
 TTString::operator int()const
@@ -112,9 +105,8 @@ Object::Object(double v):
 Object::Object(const Char* str, size_t size):
 	type(OT_STRING)
 {
-	val.str.cont = (Char*)TT_MALLOC(size * sizeof(Char));
 	val.str.size = size;
-	memcpy(val.str.cont, str, sizeof(Char) * size);
+	val.str.cont = Tools::cloneString(str, size);
 }
 
 Object::Object(FunctionValue v):
@@ -157,9 +149,8 @@ Object& Object::operator=(const Object& obj)
 		break;
 	case OT_STRING:
 		{
-			val.str.cont = (Char*)TT_MALLOC(obj.val.str.size * sizeof(Char));
 			val.str.size = obj.val.str.size;
-			memcpy(val.str.cont, obj.val.str.cont, sizeof(Char) * obj.val.str.size);
+			val.str.cont = Tools::cloneString(obj.val.str.cont, val.str.size);
 		}
 		break;
 	default:
@@ -290,11 +281,7 @@ Object* Array::operator[](const Char* key)
 			return &elem->obj;
 	}	
 	
-	size_t len = 0;
-	const Char* str = key;
-	while (*str++ != 0) ++len;
-	elem->key = (Char*)TT_MALLOC((len + 1)* sizeof(Char) );
-	memcpy(elem->key, key, sizeof(Char) * (len + 1));
+	elem->key = Tools::cloneString(key);
 	return &elem->obj;
 }
 
@@ -344,10 +331,12 @@ Array& Array::operator=(const Array& arr)
 	Array tmp(arr.mHash, arr.mTail - arr.mHead);
 	Elem* begt = tmp.mHead;
 	const Elem* bega = arr.mHead;
-	while (begt < tmp.mTail)
+	for (; begt < tmp.mTail; ++begt, ++bega)
 	{
+		if (!bega->key) continue;
 		begt->obj = bega->obj;
-		++begt; ++bega;
+		begt->key = Tools::cloneString(bega->key);
+		
 	}
 	swap(tmp);
 	return *this;
@@ -389,7 +378,7 @@ void Array::swap(Array& arr)
 
 bool Array::comp(const Char* s1, const Char* s2)const
 {
-	return compareString(s1, s2);
+	return Tools::less(s1, s2);
 }
 
 size_t Array::convertKey(size_t i, Char* key)const

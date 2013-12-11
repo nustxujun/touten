@@ -8,6 +8,12 @@
 #include <vector>
 #include "TTObject.h"
 #include "TTMemoryAllocator.h"
+#include "TTCaster.h"
+#include "TTStaticArea.h"
+#include "TTLexer.h"
+#include "TTParser.h"
+#include "TTStackBasedAssembler.h"
+#include <set>
 
 //#define MEM_DEBUG
 
@@ -17,6 +23,7 @@ struct REC
 {
 	int create;
 	int release;
+	std::set<void*> addr;
 };
 std::map<int ,REC > memrecord;
 
@@ -31,6 +38,7 @@ void* alloc(void* optr, size_t nsize)
 		memsize -= *s;
 #ifdef MEM_DEBUG
 		memrecord[*s].release += 1;
+		memrecord[*s].addr.erase(optr);
 		printf("total:%10d, current:- %d\n", memsize, *s);
 #endif
 		::free(s);
@@ -44,6 +52,7 @@ void* alloc(void* optr, size_t nsize)
 			memsize -= *s;
 #ifdef MEM_DEBUG
 			memrecord[*s].release += 1;
+			memrecord[*s].addr.erase(optr);
 			printf("total:%10d, current:- %d\n", memsize, *s);
 #endif
 		}
@@ -53,6 +62,7 @@ void* alloc(void* optr, size_t nsize)
 		memsize += nsize;
 #ifdef MEM_DEBUG
 		memrecord[*s].create += 1;
+		memrecord[*s].addr.insert(optr);
 		printf("total:%10d, current:+ %d\n", memsize, *s);
 #endif
 	}
@@ -61,12 +71,10 @@ void* alloc(void* optr, size_t nsize)
 }
 
 
-void Print(int a,double b, bool c)
+void Print(TT::String str)
 {
-		wprintf(L"%d %f %d",a,b,c);
+	wprintf(L"%s", str.c_str());
 }
-
-#include "TTFunction.h"
 
 int _tmain(int argc, _TCHAR* argv[])
 {
@@ -78,13 +86,13 @@ int _tmain(int argc, _TCHAR* argv[])
 		//t.loadFile(L"test2.txt");
 		t.loadFile(L"test.txt");
 		//t.call(L"main");
-		int a = b.call<int>(L"f1", (int)3, (float)2, true);
+		//int a = b.call<int>(L"f1", (int)3, (float)2, true);
 		b.call<void>(L"main");
+		getchar();
 	}
 
-	assert(memsize == 0);
+	assert(memsize == 0 && "leak detected");
 	//_CrtDumpMemoryLeaks();
-	getchar();
 	return 0;
 }
 

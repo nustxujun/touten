@@ -195,18 +195,6 @@ namespace TT
 		virtual void operator()(const ObjectPtr* paras, int paracount, Object* ret) = 0;
 	};
 
-	//typedef int (*TT_Function)(const ObjectPtr* paras, int paracount, Object* ret);
-
-	static bool compareString(const Char* s1, const Char* s2)
-	{
-		while(*s1 != 0 && *s2 != 0)
-		{
-			if (*s1 < *s2) return true;
-			if (*s2 < *s1) return false;
-			++s1; ++s2;
-		}
-		return *s1 < *s2;
-	}
 }
 
 #endif

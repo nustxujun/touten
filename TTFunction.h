@@ -1,7 +1,6 @@
 #ifndef _TTFunction_H_
 #define _TTFunction_H_
 
-#include "Touten.h"
 #include "TTCall.h"
 
 namespace TT

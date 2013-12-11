@@ -1,4 +1,5 @@
 #include "TTCaster.h"
+#include "TTTools.h"
 #include "TTMemoryAllocator.h"
 
 using namespace TT;
@@ -170,36 +171,63 @@ bool Caster::castToBool(const Object& o)
 	return o.type == OT_TRUE;
 }
 
-SharedPtr<TTString> Caster::castToString(const Object& o)
+//SharedPtr<TTString> Caster::castToString(const Object& o)
+//{
+//	TTString* str;
+//	switch (o.type)
+//	{
+//	case OT_NULL:
+//	case OT_FUNCTION:
+//		//case OT_FIELD:
+//		str = new TTString(L"null");
+//		break;
+//	case OT_ARRAY:
+//		return castToString(*o.val.arr->get((size_t)0));
+//	case OT_STRING:
+//		str = new TTString(o.val.str);
+//		break;
+//	case OT_TRUE:
+//		str = new TTString(L"true");
+//		break;
+//	case OT_FALSE:
+//		str = new TTString(L"false");
+//		break;
+//	case OT_DOUBLE:
+//		str = new TTString(o.val.d);
+//		break;
+//	case OT_INTEGER:
+//		str = new TTString(o.val.i);
+//		break;
+//	}
+//	return str;
+//}
+
+String Caster::castToString(const Object& o)
 {
-	TTString* str;
-	switch (o.type)
-	{
-	case OT_NULL:
-	case OT_FUNCTION:
-		//case OT_FIELD:
-		str = new TTString(L"null");
-		break;
-	case OT_ARRAY:
-		return castToString(*o.val.arr->get((size_t)0));
-	case OT_STRING:
-		str = new TTString(o.val.str);
-		break;
-	case OT_TRUE:
-		str = new TTString(L"true");
-		break;
-	case OT_FALSE:
-		str = new TTString(L"false");
-		break;
-	case OT_DOUBLE:
-		str = new TTString(o.val.d);
-		break;
-	case OT_INTEGER:
-		str = new TTString(o.val.i);
-		break;
-	}
-	return str;
+		switch (o.type)
+		{
+		case OT_ARRAY:
+			return castToString(*o.val.arr->get((size_t)0));
+		case OT_STRING:
+			return o.val.str.cont;
+			break;
+		case OT_TRUE:
+			return L"true";
+			break;
+		case OT_FALSE:
+			return L"false";
+			break;
+		case OT_DOUBLE:
+			return Tools::toString(o.val.d);
+			break;
+		case OT_INTEGER:
+			return Tools::toString(o.val.i);
+			break;
+		default:
+			return L"null";
+		}
 }
+
 
 double Caster::castToReal(const Object& o)
 {

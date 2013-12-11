@@ -2,6 +2,7 @@
 #define _TTBind_H_
 
 #include "Touten.h"
+#include "TTFunction.h"
 
 namespace TT
 {
