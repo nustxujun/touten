@@ -2,15 +2,22 @@
 #define _TTTools_H_
 
 #include"ToutenCommon.h"
+#include <sstream>
 
 namespace TT
 {
 	class Tools
 	{
 	public :
-		static String toString(int val);
-		static String toString(double val);
-
+		template<class T>
+		static String toString(T val)
+		{
+			std::wstringstream ss;
+			ss << val;
+			String ret;
+			ss >> ret;
+			return ret;
+		}
 
 		static int toInt(const String& val);
 

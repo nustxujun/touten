@@ -127,12 +127,13 @@ Object::~Object()
 	switch (type)
 	{
 	case OT_ARRAY:
-		TT_DELETE(Array, val.arr);
+		TT_DELETE(ArrayPtr, val.arr);
 		break;
 	case OT_STRING:
 		TT_FREE(val.str.cont);
 		break;
 	}
+	type = OT_NULL;
 	
 }
 
@@ -143,8 +144,8 @@ Object& Object::operator=(const Object& obj)
 	{
 	case OT_ARRAY:
 		{
-			val.arr = TT_NEW(Array)(false);
-			*val.arr = *obj.val.arr;
+			val.arr = TT_NEW(ArrayPtr)(false);
+			val.arr->copy( *obj.val.arr);
 		}
 		break;
 	case OT_STRING:
@@ -162,20 +163,31 @@ Object& Object::operator=(const Object& obj)
 	return *this;
 }
 
-ObjectPtr::ObjectPtr(Object* obj ):
-	mInst(obj), mAutoDel(false), mCount(0)
+void Object::reference(const Object& obj)
 {
-	if (!obj)
+	switch (obj.type)
 	{
-		mInst = TT_NEW(Object)();
-		mAutoDel = true;
-		mCount = TT_NEW(size_t)(1);
+	case OT_ARRAY:
+		{
+			this->~Object();
+			val.arr = TT_NEW(ArrayPtr)(*obj.val.arr);
+			type = obj.type;
+		}
+		break;
+	default:
+		*this = obj;
 	}
 }
-	
+
+
+ObjectPtr::ObjectPtr()
+{
+	mInst = TT_NEW(Object)();
+	mCount = TT_NEW(size_t)(1);
+}
+
 ObjectPtr::ObjectPtr(const Object& obj)
 {
-	mAutoDel = true;
 	mInst = TT_NEW(Object)();
 	*mInst = obj;
 	mCount = TT_NEW(size_t)(1);
@@ -183,12 +195,29 @@ ObjectPtr::ObjectPtr(const Object& obj)
 
 ObjectPtr::ObjectPtr(const ObjectPtr& obj)
 {
-	mAutoDel = obj.mAutoDel;
 	mInst = obj.mInst;
 	mCount = obj.mCount;
-	if (obj.mAutoDel)
+	if (mCount)
 		++(*mCount);
 }
+
+void ObjectPtr::swap(ObjectPtr& obj)
+{
+	std::swap(mInst, obj.mInst);
+	std::swap(mCount, obj.mCount);
+}
+
+
+void ObjectPtr::operator = (const ObjectPtr& obj)
+{
+	setNull();
+
+	mInst = obj.mInst;
+	mCount = obj.mCount;
+	if (mCount)
+		++(*mCount);
+}
+
 
 Object& ObjectPtr::operator*() const
 {
@@ -200,19 +229,27 @@ Object* ObjectPtr::operator->()const
 	return mInst;
 }
 
+void ObjectPtr::setNull()
+{
+	if (isNull()) return;
+	if (*mCount == 1)
+	{
+		TT_DELETE(Object, mInst);
+		TT_FREE(mCount);
+		mCount = nullptr;
+	}
+	else
+		--(*mCount);
+}
+
+bool ObjectPtr::isNull() const
+{
+	return mCount == nullptr;
+}
 
 ObjectPtr::~ObjectPtr()
 {
-	if (mAutoDel )
-	{
-		if (*mCount == 1)
-		{
-			TT_DELETE(Object, mInst);
-			TT_FREE(mCount);
-		}
-		else 
-			--(*mCount);
-	}
+	setNull();
 }
 
 Array::Array(bool hash, size_t cap)
@@ -227,38 +264,33 @@ Array::~Array()
 {
 	for (Elem* i = mHead; i < mTail; ++i)
 	{
-		if (i->key == 0) continue;
-		TT_FREE(i->key);
-		i->obj.~Object();
+		if (i->key != 0)
+			TT_FREE(i->key);
+		i->obj.setNull();
 	}
 	TT_FREE(mHead);
 }
 
-Object* Array::operator[](size_t index)
+ObjectPtr Array::operator[](size_t index)
 {
 	if (!mHash)
 	{
-		if (!checkSize(index))
+		const int ARRAY_MAX_SIZE = 0xff;
+		if (index < ARRAY_MAX_SIZE)
 		{
-			const int ARRAY_MAX_SIZE = 0xff;
-			if (index < ARRAY_MAX_SIZE)
-			{
-				grow();
-				return &mHead[index].obj;
-			}
-			else
-				convertToHashMap();
+			if (!checkSize(index)) grow();
+			if (mHead[index].obj.isNull())
+				mHead[index].obj = Object();
+			return mHead[index].obj;
 		}
-		else	
-			return &mHead[index].obj;
+		else convertToHashMap();
 	}
 
-	Char key[IntkeyLength];
-	convertKey(index, key);
-	return operator[](key);
+	String key = Tools::toString(index);
+	return operator[](key.c_str());
 }
 
-Object* Array::operator[](const Char* key)
+ObjectPtr Array::operator[](const Char* key)
 {
 	if (!mHash) convertToHashMap();
 
@@ -278,32 +310,35 @@ Object* Array::operator[](const Char* key)
 			}
 		}
 		else//equal
-			return &elem->obj;
+			return elem->obj;
 	}	
 	
 	elem->key = Tools::cloneString(key);
-	return &elem->obj;
+	if (elem->obj.isNull())
+		elem->obj = Object();
+	return elem->obj;
 }
 
-Object* Array::get(size_t index) const
+ObjectPtr Array::get(size_t index) const
 {
 	if (!mHash)
 	{
 		if (checkSize(index))
-			return &mHead[index].obj;
+		{
+			return mHead[index].obj;
+		}
 		else
-			return 0;
+			return ObjectPtr();
 		
 	}
 
-	Char key[IntkeyLength];
-	convertKey(index, key);
-	return get(key);
+	String key = Tools::toString(index);
+	return get(key.c_str());
 }
 
-Object* Array::get(const Char* key) const
+ObjectPtr Array::get(const Char* key) const
 {
-	if (!mHash) return 0;
+	if (!mHash) return ObjectPtr();
 
 	size_t hashval = hash(key);
 	Elem* elem = &mHead[hashval % (mTail - mHead)];
@@ -316,14 +351,14 @@ Object* Array::get(const Char* key) const
 			if (elem == mTail) elem = mHead;
 			if (elem == head) 
 			{
-				return 0;
+				return ObjectPtr();
 			}
 		}
 		else
-			return &elem->obj;
+			return elem->obj;
 	}	
 	
-	return 0;
+	return ObjectPtr();
 }
 
 Array& Array::operator=(const Array& arr)
@@ -353,9 +388,7 @@ void Array::grow()
 		Elem* head = mHead;
 		for (; head != mTail; ++head)
 			if (head->key)
-				*tmp[head->key] = head->obj;
-		//置空指针
-		memset(mHead, 0, sizeof(Elem) * size);
+				tmp[head->key] = head->obj;
 		swap(tmp);
 	}
 	else
@@ -381,27 +414,6 @@ bool Array::comp(const Char* s1, const Char* s2)const
 	return Tools::less(s1, s2);
 }
 
-size_t Array::convertKey(size_t i, Char* key)const
-{
-	int length = 0;
-	size_t num = i;
-	do
-	{
-		++length;
-		num /= 10;
-	}
-	while( num != 0);
-	if (key == 0) return length;
-	num = i;
-	for (int i = length - 1; i >= 0; --i)
-	{
-		key[i] = (num % 10) + '0';
-		num /= 10;
-	}
-	key[length] = 0;
-	return length;
-}
-
 bool Array::checkSize(size_t size)const
 {
 	return size < (mTail - mHead);
@@ -413,28 +425,14 @@ void Array::convertToHashMap()
 	Array tmp(true, size);
 	Elem* head = mHead;
 
-	const int defaultSize = 32 * sizeof(Char);
-	size_t len = defaultSize;
-	Char* key = (Char*)TT_MALLOC(len * sizeof(Char));
-
 	for (size_t i = 0; head != mTail; ++head, ++i)
 	{
-		if (head->obj.type == OT_NULL) continue;
-		size_t klen = convertKey(i, 0) + 1;
-		if (klen > len)
-		{
-			len = klen;
-			TT_FREE(key);
-			key = (Char*)TT_MALLOC(len * sizeof(Char));
-		}
-		
-		convertKey(i, key);
-		*tmp[key] = head->obj;
+		if (head->obj.isNull() || head->obj->type == OT_NULL) continue;
+		String key = Tools::toString(i);
+
+		tmp[key.c_str()] = head->obj;
 	}
 
-	TT_FREE(key);
-
-	memset(mHead, 0, sizeof(Elem) * size);
 	swap(tmp);
 	mHash = true;
 }
@@ -448,104 +446,72 @@ size_t Array::hash(const Char* key)const
 
 }
 
-ObjectVector::ObjectVector()
+ArrayPtr::ArrayPtr(bool bhash)
 {
-	mLast = mHead = (Object*)TT_MALLOC( OBJECT_STACK_SIZE * sizeof(Object));
-	mTail = mHead + OBJECT_STACK_SIZE;
+	mArray = TT_NEW(Array)(bhash);
+	mCount = TT_NEW(size_t)(1);
 }
 
-ObjectVector::~ObjectVector()
+ArrayPtr::ArrayPtr(const ArrayPtr& ap)
 {
-	TT_DELETE_ARRAY(Object, mHead, mLast - mHead);
+	mArray = ap.mArray;
+	mCount = ap.mCount;
+	++(*mCount);
+
 }
 
-Object* ObjectVector::operator[](size_t index)
+ArrayPtr::~ArrayPtr()
 {
-	if (index >= (mLast - mHead))	 assert(0);
-	return &mHead[index];
+	setNull();
 }
 
-Object* ObjectVector::begin()
+ObjectPtr ArrayPtr::operator[](size_t index)
 {
-	return mHead;
+	return (*mArray)[index];
 }
 
-Object* ObjectVector::back()
+ObjectPtr ArrayPtr::operator[](const Char* key)
 {
-	return mLast - 1;
+	return (*mArray)[key];
 }
 
-Object* ObjectVector::end()
+ObjectPtr ArrayPtr::get(size_t index)const
 {
-	return mLast;
+	return mArray->get(index);
 }
 
-Object* ObjectVector::push()
+ObjectPtr ArrayPtr::get(const Char* key)const
 {
-	if (mLast == mTail) assert(0 && "not enough obj");//这里直接返回的obj指针，所以不能随便修改容器大小
-	new (mLast) Object();
-	++mLast;
-	return mLast - 1;
+	return mArray->get(key);
 }
 
-void ObjectVector::pop()
+void ArrayPtr::setNull()
 {
-	assert(mHead <mLast);
-	--mLast;
-	mLast->~Object();
-}
-
-bool ObjectVector::empty()const
-{
-	return mLast == mHead;
-}
-
-void ObjectVector::resize(size_t size)
-{
-	if ( (mLast - mHead) >= size) return;
-	if ( (mTail - mHead) < size) reserve(size * 2);
-
-	size_t init = size - (mLast - mHead);
-	for (size_t i = 0; i < size; ++i)
+	if (isNull()) return;
+	if (*mCount == 1)
 	{
-		new (mLast++) Object();
+		TT_DELETE(Array, mArray);
+		TT_FREE(mCount);
+		mCount = nullptr;
 	}
+	else
+		--(*mCount);
 }
 
-void ObjectVector::reserve(size_t size)
+bool ArrayPtr::isNull()const
 {
-	size_t cap = mTail - mHead;
-	if (size <= cap) return;
-	size_t osize = mLast - mHead;
-	mHead = (Object*)TT_REALLOC(mHead, size * sizeof(Object));
-	mLast = mHead + osize;
-	mTail = mHead + size;
+	return (mCount == nullptr);
 }
 
-ObjectSet::~ObjectSet()
+void ArrayPtr::operator = (const ArrayPtr& ap)
 {
-	//assert(mObjs.empty());
-	std::for_each(mObjs.begin(), mObjs.end(), [](Object* obj){TT_DELETE(Object, obj);});
+	setNull();
+	mArray = ap.mArray;
+	mCount = ap.mCount;
+	++(*mCount);
 }
 
-
-void ObjectSet::erase(Object* obj)
+void ArrayPtr::copy(const ArrayPtr& ap)
 {
-	auto ret = mObjs.find(obj);
-	if (ret == mObjs.end()) return;
-	TT_DELETE(Object, obj);
-	mObjs.erase(ret);
+	*mArray = *ap.mArray;
 }
-
-Object* ObjectSet::add()
-{
-	Object* obj = TT_NEW(Object);
-	mObjs.insert(obj);
-	return obj;
-}
-
-bool ObjectSet::empty()const
-{
-	return mObjs.empty();
-}
-

@@ -221,10 +221,10 @@ ASTNode::Ptr Parser::parseStat(ParserInput* input)
 	case TT_NAME://assgin funcall
 		{
 			ASTNode::Ptr var = parseVar(input);
-			if (input->lookahead().type == TT_ASSGIN)
-			{
+			t = input->lookahead();
+			if (t.type == TT_ASSGIN ||
+				t.type == TT_REF)
 				return parseAssgin(input,var);
-			}
 			else
 				return parseFuncCall(input,false, var);
 
@@ -318,7 +318,9 @@ ASTNode::Ptr Parser::parseVar(ParserInput* input, AccessType deftype)
 			}
 			ConstNode* cn = new ConstNode;
 			cn->type = CT_STRING;
-			copyString(cn->value.s, t.string, t.size);
+			cn->value.s = t.string;
+			cn->value.c = t.size;
+			//copyString(cn->value.s, t.string, t.size);
 			last = last->setAndNext(cn);
 		}
 		else
@@ -497,9 +499,14 @@ ASTNode::Ptr Parser::parseAssgin(ParserInput* input, ASTNode::Ptr pre )
 		}
 	}
 
-	if (input->next().type != TT_ASSGIN)
+	Token t = input->next();
+	if (t.type == TT_ASSGIN)
+		an->isRef = false;
+	else if (t.type == TT_REF)
+		an->isRef = true;
+	else
 	{
-		TTPARSER_EXCEPT("need =");
+		TTPARSER_EXCEPT("need = or &=");
 		return 0;
 	}
 
@@ -740,7 +747,9 @@ ASTNode::Ptr Parser::parseConst(ParserInput* input)
 
 	input->next();
 	if (t.type == TT_STRING)
-		copyString(cn->value.s, t.val.s.b, t.val.s.s);
+		cn->value.s = t.string, cn->value.c = t.size;
+
+		//copyString(cn->value.s, t.val.s.b, t.val.s.s);
 	else
 		memcpy(&cn->value, &t.val, sizeof(t.val));	
 

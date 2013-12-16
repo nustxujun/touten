@@ -66,7 +66,7 @@ namespace TT
 	};
 
 
-	class Array;
+	class ArrayPtr;
 	union Value
 	{
 		int i;
@@ -75,7 +75,7 @@ namespace TT
 		StringValue str;
 		FunctionValue func;
 
-		Array* arr;
+		ArrayPtr* arr;
 	};
 
 	struct Object
@@ -94,48 +94,32 @@ namespace TT
 		~Object();
 		Object& operator=(const Object& obj);
 
+		void reference(const Object& obj);
+
 		void swap(Object& obj);
 	};
 
 	class ObjectPtr
 	{
 	public :
-		ObjectPtr(Object* obj = 0);
+		ObjectPtr();
+		//ObjectPtr(Object* obj = 0);
 		ObjectPtr(const Object& obj);
-		Object& operator*() const;
-		Object* operator->()const;
-		
-		~ObjectPtr();
 		ObjectPtr(const ObjectPtr& obj);
 
-	private:
-		void operator=(const ObjectPtr&);
+		~ObjectPtr();
+
+		void operator=(const ObjectPtr& obj);
+		Object& operator*() const;
+		Object* operator->()const;
+
+		void setNull();
+		bool isNull() const;
+
+		void swap(ObjectPtr& obj);
 	private:
 		Object* mInst;
-		bool mAutoDel;
 		size_t* mCount;
-	};
-
-	class ObjectVector
-	{
-	public :
-		ObjectVector();
-		~ObjectVector();
-		Object* operator[](size_t index);
-		Object* begin();
-		Object* back();
-		Object* end();
-
-		Object* push();
-		void pop();
-		bool empty()const;
-
-		void resize(size_t size);
-		void reserve(size_t size);
-	private:
-		Object* mHead;
-		Object* mTail;
-		Object* mLast;		
 	};
 
 	class Array
@@ -144,18 +128,18 @@ namespace TT
 		static const size_t IntkeyLength = 0xff;
 		struct Elem
 		{
-			Object obj;
+			ObjectPtr obj;
 			Char* key;
 		};
 	public :
 		Array(bool hash, size_t cap = 8);
 		~Array();
 
-		Object* operator[](size_t index);
-		Object* operator[](const Char* key);
+		ObjectPtr operator[](size_t index);
+		ObjectPtr operator[](const Char* key);
 
-		Object* get(size_t index)const ;
-		Object* get(const Char* key)const ;
+		ObjectPtr get(size_t index)const;
+		ObjectPtr get(const Char* key)const;
 
 		Array& operator=(const Array& arr);
 
@@ -163,7 +147,6 @@ namespace TT
 		void swap(Array& arr);
 		void grow();
 		void convertToHashMap();
-		size_t convertKey(size_t i, Char* key)const;
 		bool checkSize(size_t size)const;
 
 		size_t hash(const Char* key)const;
@@ -174,20 +157,34 @@ namespace TT
 		Elem* mTail;
 		Elem* mLast;
 		bool mHash;
-		
 	};
 
-	class ObjectSet
+	class ArrayPtr
 	{
 	public :
-		~ObjectSet();
-		Object* add();
-		void erase(Object* obj);
-		bool empty()const;
-	private:
-		std::set<Object*> mObjs;
-	};
+		ArrayPtr(const ArrayPtr& ap) ;
+		ArrayPtr(bool bhash);
+		~ArrayPtr();
 
+		void operator=(const ArrayPtr& ap);
+
+		ObjectPtr operator[](size_t index);
+		ObjectPtr operator[](const Char* key);
+
+		ObjectPtr get(size_t index)const;
+		ObjectPtr get(const Char* key)const;
+
+
+		void copy(const ArrayPtr& ap);
+
+	private:
+		void setNull();
+		bool isNull()const;
+
+	private:
+		Array* mArray;
+		size_t* mCount;
+	};
 
 	class Functor
 	{

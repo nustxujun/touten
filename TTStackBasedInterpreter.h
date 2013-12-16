@@ -48,11 +48,13 @@ namespace TT
 
 	private:
 		void popOpr();
-		void pushOpr(Object* obj);
+		//void pushOpr(Object* obj);
 		void pushOpr(const Object& obj);
+		void pushOpr(const ObjectPtr& obj = ObjectPtr());
+
 
 		CallFrame& pushCallFrame(const char* begin, const char* current, bool bret);
-		void popCallFrame(Object& ret);
+		void popCallFrame(ObjectPtr& ret);
 
 		void compareOpt(const Object& o1, const Object& o2, Instruction instr, Object& o);
 		void normalOpt(const Object& o1, const Object& o2, Instruction instr, Object& o);

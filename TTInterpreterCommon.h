@@ -65,6 +65,12 @@ namespace TT
 		VOID
 	};
 
+	enum InstructionParameter
+	{
+		IP_STORE_REF,
+		IP_STORE_COPY,
+	};
+
 	typedef int Operand;
 	const int INSTR_SIZE = 1;
 

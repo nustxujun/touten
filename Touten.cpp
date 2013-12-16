@@ -24,6 +24,8 @@ struct REC
 	int create;
 	int release;
 	std::set<void*> addr;
+	REC() :create(0), release(0)
+	{}
 };
 std::map<int ,REC > memrecord;
 

@@ -60,6 +60,7 @@ namespace TT
 	public :
 		ASTNodeList::Ptr left;
 		ASTNode::Ptr right;
+		bool isRef;
 	};
 
 	class VarListNode: public ASTNode
@@ -105,7 +106,11 @@ namespace TT
 		{
 			int i;
 			double d;
-			Char s[MAX_VAR_NAME_LEN];
+			struct
+			{
+				const Char* s;
+				size_t c;
+			};
 		}value ;
 	};
 

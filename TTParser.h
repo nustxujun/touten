@@ -1,6 +1,7 @@
 ﻿#ifndef _TTParser_H_
 #define _TTParser_H_
 
+#include "ToutenCommon.h"
 #include "TTLexer.h"
 #include "TTASTNode.h"
 #include "TTType.h"

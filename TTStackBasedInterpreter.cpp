@@ -110,7 +110,7 @@ void StackBasedInterpreter::execute(const ConstantPool& constpool, const char* c
 	{
 		for (size_t i = 0; i < parasCount; ++i)
 		{
-			pushOpr(*paras[i]);
+			pushOpr(paras[i]);
 		}
 	}
 	
@@ -125,9 +125,10 @@ void StackBasedInterpreter::execute(const ConstantPool& constpool, const char* c
 		return opr;
 	};
 
-	auto getArg = [this](size_t num)->Object&
+	auto getArg = [this](size_t num)->ObjectPtr&
 	{
-		return **((mCallStack.top().vars.end() - 1) - num);
+		auto& vec = mCallStack.top().vars;
+		return *((vec.data() + vec.size() - 1) - num);
 	};
 
 	
@@ -151,15 +152,15 @@ void StackBasedInterpreter::execute(const ConstantPool& constpool, const char* c
 				case LOAD_SHARED: env = sharedenv ;break;
 				case LOAD_GLOBAL: env = &mGlobalEnv;break;
 				}
-				const Object& name = getArg(0);
-				Object& obj = *(*env->val.arr)[name.val.str.cont];
+				const Object& name = *getArg(0);
+				ObjectPtr obj = (*env->val.arr)[name.val.str.cont];
 				popOpr();
-				pushOpr(&obj);
+				pushOpr(obj);
 			}
 			break;
 
 		case LOAD_NULL:
-			pushOpr(Object());
+			pushOpr();
 			break;
 		case LOAD_BOOL:
 			pushOpr(Object(getopr() != 0));
@@ -176,9 +177,9 @@ void StackBasedInterpreter::execute(const ConstantPool& constpool, const char* c
 				Operand opr = getopr();
 				size_t size = *(size_t*)(constpool[opr]);
 				const Char* str= (const Char*)(constpool[opr + 4]);
-				pushOpr(Object());
+				pushOpr();
 
-				Object& obj = getArg(0); 
+				Object& obj = *getArg(0); 
 
 				obj.swap(Object(str, size));//reduce copying
 			}
@@ -191,10 +192,16 @@ void StackBasedInterpreter::execute(const ConstantPool& constpool, const char* c
 			break;
 		case STORE:
 			{
-				Object& obj = getArg(0);
-				const Object& val = getArg(1);
-				//*(*localenv->val.arr)[name.val.str.cont] = val;
-				obj = val;
+				Operand opr = getopr();
+				ObjectPtr& obj = getArg(0);
+				ObjectPtr& val = getArg(1);
+				switch (opr)
+				{
+				case IP_STORE_REF:
+					obj->reference(*val); break;
+				default:
+					*obj = *val;
+				}
 				popOpr();
 				popOpr();
 			}
@@ -202,12 +209,12 @@ void StackBasedInterpreter::execute(const ConstantPool& constpool, const char* c
 		case STORE_ARRAY:
 			{
 				Operand count = getopr();
-				const Object& arr = getArg(count);
+				const Object& arr = *getArg(count);
 				if (arr.type == OT_ARRAY)
 				{
 					for (size_t i = 0; i < count; ++i)
 					{
-						const Object& name = getArg(0);
+						const Object& name = *getArg(0);
 						*(*localenv->val.arr)[name.val.str.cont] = 
 							*arr.val.arr->get(i);
 						popOpr();
@@ -215,7 +222,7 @@ void StackBasedInterpreter::execute(const ConstantPool& constpool, const char* c
 				}
 				else
 				{
-					const Object& name = getArg(count - 1);
+					const Object& name = *getArg(count - 1);
 					*(*localenv->val.arr)[name.val.str.cont] = arr;
 					for (size_t i = 0; i < count; ++i)
 						popOpr();
@@ -226,14 +233,14 @@ void StackBasedInterpreter::execute(const ConstantPool& constpool, const char* c
 			break;
 		case ADDR:
 			{
-				const Object& index = getArg(0);
-				Object& obj = getArg(1);
+				const Object& index = *getArg(0);
+				Object& obj = *getArg(1);
 
 				curenv = &obj;
 
 				Caster::cast(obj, OT_ARRAY);
 			
-				Object* elem ;
+				ObjectPtr elem ;
 				if (index.type == OT_STRING)
 					elem = (*obj.val.arr)[index.val.str.cont];
 				else
@@ -247,7 +254,7 @@ void StackBasedInterpreter::execute(const ConstantPool& constpool, const char* c
 			break;
 		case CALL:
 			{
-				const Object& func = getArg(0);
+				const Object& func = *getArg(0);
 				size_t opr = getopr();
 				size_t argsnum = FunctionValue::PARA_COUNT & opr;
 				size_t bret = FunctionValue::NEED_RETURN & opr;
@@ -255,7 +262,7 @@ void StackBasedInterpreter::execute(const ConstantPool& constpool, const char* c
 				{
 					popOpr();
 					if (bret)
-						pushOpr(Object());
+						pushOpr();
 					break;
 				}
 
@@ -295,10 +302,10 @@ void StackBasedInterpreter::execute(const ConstantPool& constpool, const char* c
 						if (i < pc)
 							os.pop_back();
 						else if (i < an)
-							pushOpr(Object());
+							pushOpr();
 						else
 						{
-							pushOpr(*os.back());
+							pushOpr(os.back());
 							os.pop_back();
 						}
 					}
@@ -323,12 +330,12 @@ void StackBasedInterpreter::execute(const ConstantPool& constpool, const char* c
 				begin = old.beginPos;
 				current = old.curPos;
 				bool bret = old.needret;
-				Object ret;
+				ObjectPtr ret;
 				popCallFrame(ret);
 				if (mCallStack.empty())
 				{
 					if (callret)
-						*callret = ret;
+						*callret = *ret;
 					return;
 				}
 				if (bret)
@@ -352,7 +359,7 @@ void StackBasedInterpreter::execute(const ConstantPool& constpool, const char* c
 		case JZ:
 			{
 				size_t jumpos = getopr();
-				const Object& obj = getArg(0);
+				const Object& obj = *getArg(0);
 				if (!Caster::castToBool(obj))
 					current = begin + jumpos;
 				popOpr();
@@ -370,7 +377,7 @@ void StackBasedInterpreter::execute(const ConstantPool& constpool, const char* c
 		case XOR:case EQ:case NE:case GREAT:
 		case LESS:case GE:case LE:case ADD:
 		case SUB:case MUL:case DIV:case MOD:
-			autoOpt(getArg(1), getArg(0), instr);
+			autoOpt(*getArg(1), *getArg(0), instr);
 			break;
 		case HALT:
 			return;
@@ -386,12 +393,17 @@ void StackBasedInterpreter::popOpr()
 	mCallStack.top().vars.pop_back();
 }
 
-void StackBasedInterpreter::pushOpr(Object* obj)
+//void StackBasedInterpreter::pushOpr(Object* obj)
+//{
+//	mCallStack.top().vars.push_back(obj);
+//}
+
+void StackBasedInterpreter::pushOpr(const Object& obj)
 {
 	mCallStack.top().vars.push_back(obj);
 }
 
-void StackBasedInterpreter::pushOpr(const Object& obj)
+void StackBasedInterpreter::pushOpr(const ObjectPtr& obj)
 {
 	mCallStack.top().vars.push_back(obj);
 }
@@ -408,7 +420,7 @@ CallFrame& StackBasedInterpreter::pushCallFrame(const char* begin, const char* c
 	return cf;
 }
 
-void StackBasedInterpreter::popCallFrame(Object& ret)
+void StackBasedInterpreter::popCallFrame(ObjectPtr& ret)
 {
 	auto& os = mCallStack.top().vars;
 
@@ -422,13 +434,13 @@ void StackBasedInterpreter::popCallFrame(Object& ret)
 	}
 	else if (retcount == 1)
 	{
-		ret = *os.back();
+		ret = os.back();
 		mCallStack.pop();
 		//pushOpr(tmp);	
 	}
 	else
 	{
-		Array* arr = TT_NEW(Array)(false);
+		ArrayPtr* arr = TT_NEW(ArrayPtr)(false);
 		for (size_t i = 0; !os.empty(); ++i)
 		{
 			*(*arr)[i] = *os.back();
@@ -437,8 +449,8 @@ void StackBasedInterpreter::popCallFrame(Object& ret)
 		
 		mCallStack.pop();
 
-		ret.type = OT_ARRAY;
-		ret.val.arr = arr;
+		(*ret).type = OT_ARRAY;
+		(*ret).val.arr = arr;
 
 	}
 	//return pos;

@@ -79,6 +79,23 @@ void Lexer::parse(const Char*& read, Token& t)
 			}
 			return;
 		case '&':
+			{
+				t.type = TT_OPERATOR;
+				t.string = read++;
+				t.lineNum = mLineNum;
+				if (*read == '=')			// &=
+				{
+					t.type = TT_REF;
+					t.size = 2;
+					++read;
+				}
+				else if (*read == '&')		// &&
+					t.size = 2, ++read;
+				else						// &
+					t.size = 1;
+				return;
+			}
+			break;
 		case '|':
 			{
 				t.type = TT_OPERATOR;
@@ -348,50 +365,49 @@ bool Lexer::getString(const Char*& read, Token& token)
 			switch (*read)
 			{
 			case '"':
-			case '\'':
+			//case '\'':
 				{
 					if (dob != *read)
 						break;
 
-					token.val.s.s = size + 1;
+					token.size = size ;
+					//if (token.val.s.s > MAX_VAR_NAME_LEN)
+					//{
+					//	TTLEXER_EXCEPT(LET_UNKNOWN);
+					//	return false;
+					//}
+					//token.val.s.b = (Char*)mStaticArea.assgin( sizeof(Char) * token.val.s.s);
 
-					if (token.val.s.s > MAX_VAR_NAME_LEN)
-					{
-						TTLEXER_EXCEPT(LET_UNKNOWN);
-						return false;
-					}
-					token.val.s.b = (Char*)mStaticArea.assgin( sizeof(Char) * token.val.s.s);
+					//const Char* begin = token.string;
+					//Char* write = token.val.s.b;
+					//while ( begin < read)
+					//{
+					//	if(*begin == '\\')
+					//	{
+					//		switch (*(++begin))
+					//		{
+					//		case 'a': *write = '\a'; break;
+					//		case 'b': *write = '\b'; break;
+					//		case 'f': *write = '\f'; break;
+					//		case 'n': *write = '\n'; break;
+					//		case 'r': *write = '\r'; break;
+					//		case 't': *write = '\t'; break;
+					//		case 'v': *write = '\v'; break;
+					//		case '\n':*write = '\n'; break;
+					//		case '\r':*write = '\r'; break;
+					//		default:
+					//			TTLEXER_EXCEPT(LET_UNKNOWN); 
+					//			return false;
+					//		}
+					//	}
+					//	else
+					//		*write =  *begin;
 
-					const Char* begin = token.string;
-					Char* write = token.val.s.b;
-					while ( begin < read)
-					{
-						if(*begin == '\\')
-						{
-							switch (*(++begin))
-							{
-							case 'a': *write = '\a'; break;
-							case 'b': *write = '\b'; break;
-							case 'f': *write = '\f'; break;
-							case 'n': *write = '\n'; break;
-							case 'r': *write = '\r'; break;
-							case 't': *write = '\t'; break;
-							case 'v': *write = '\v'; break;
-							case '\n':*write = '\n'; break;
-							case '\r':*write = '\r'; break;
-							default:
-								TTLEXER_EXCEPT(LET_UNKNOWN); 
-								return false;
-							}
-						}
-						else
-							*write =  *begin;
+					//	++begin;
+					//	++write;
 
-						++begin;
-						++write;
-
-					}
-					*write = 0;
+					//}
+					//*write = 0;
 					++read;
 					return true;
 					

@@ -152,7 +152,7 @@ void Caster::castToArrayObject(Object& o)
 {
 	if (o.type == OT_ARRAY) return;
 
-	Array* arr = TT_NEW(Array)(false);
+	ArrayPtr* arr = TT_NEW(ArrayPtr)(false);
 	*(*arr)[(size_t)0] = o;
 	o.~Object();
 	o.type = OT_ARRAY;

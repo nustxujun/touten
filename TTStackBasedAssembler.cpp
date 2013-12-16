@@ -70,7 +70,7 @@ void StackBasedAssembler::visit(VarNode* node)
 					case AT_GLOBAL: instr = LOAD_GLOBAL; break;
 					case AT_LOCAL:  instr = LOAD_LOCAL; break;
 					}
-					addInstruction(LOAD_STRING, stringToConstPool(mCurName.c_str()));
+					addInstruction(LOAD_STRING, stringToConstPool(mCurName.c_str(), mCurName.size()));
 					addInstruction(instr);
 					
 			}
@@ -110,7 +110,7 @@ void StackBasedAssembler::visit(VarNode* node)
 			}
 
 			mCurSymbol = mCurScope->createSymbol(mCurName, ST_VARIABLE, node->type);
-			addInstruction(LOAD_STRING, stringToConstPool(mCurName.c_str()));
+			addInstruction(LOAD_STRING, stringToConstPool(mCurName.c_str(), mCurName.size()));
 			//if (!mIsLeft)
 				addInstruction(instr);
 		}
@@ -152,9 +152,7 @@ void StackBasedAssembler::visit(AssginNode* node)
 	if (varcount > 1)
 		addInstruction(STORE_ARRAY, varcount);
 	else
-	{
-		addInstruction(STORE);
-	}
+		addInstruction(STORE, node->isRef ? IP_STORE_REF : IP_STORE_COPY);
 }
 
 void StackBasedAssembler::visit(VarListNode* node)
@@ -225,9 +223,9 @@ void StackBasedAssembler::visit(FunctionNode* node)
 		{
 			mCurSymbol = mCurScope->createSymbol(mCurName, ST_VARIABLE, AT_LOCAL);
 			mCurSymbol->isdefine = true;
-			addInstruction(LOAD_STRING, stringToConstPool(mCurName.c_str()));
+			addInstruction(LOAD_STRING, stringToConstPool(mCurName.c_str(), mCurName.size()));
 			addInstruction(LOAD_LOCAL);
-			addInstruction(STORE);
+			addInstruction(STORE, IP_STORE_COPY);
 		}
 		else
 		{
@@ -281,7 +279,42 @@ void StackBasedAssembler::visit(ConstNode* node)
 		addInstruction(LOAD_REAL, mConstPool << node->value.d);
 		return;
 	case CT_STRING:
-		addInstruction(LOAD_STRING, stringToConstPool(node->value.s));
+		{
+			Char* str = new Char[node->value.c + 1]();
+
+			Char* write = str;
+			const Char* read = node->value.s;
+			for (size_t i = 0; i < node->value.c; )
+			{
+				const Char* cur = read + i;
+				if (*cur == '\\')
+				{
+					++i; ++cur;
+					switch (*cur)
+					{
+					case 'a': *write = '\a'; break;
+					case 'b': *write = '\b'; break;
+					case 'f': *write = '\f'; break;
+					case 'n': *write = '\n'; break;
+					case 'r': *write = '\r'; break;
+					case 't': *write = '\t'; break;
+					case 'v': *write = '\v'; break;
+					case '\n':*write = '\n'; break;
+					case '\r':*write = '\r'; break;
+					default:
+						//error
+						break;
+					}
+				}
+				else
+					*write = *cur;
+
+				++write;
+				++i;
+			}
+			addInstruction(LOAD_STRING, stringToConstPool(str, write - str));
+			delete str;
+		}
 		return;
 	}
 }
@@ -393,14 +426,13 @@ void StackBasedAssembler::addbackfill(Symbol* s, size_t instr)
 	mBackFill[s].push_back(instr);
 }
 
-size_t StackBasedAssembler::stringToConstPool(const Char* str)
+size_t StackBasedAssembler::stringToConstPool(const Char* str, size_t size)
 {
-	size_t charcount = 1;
-	const Char* tmp = str;
-	while (*tmp++) ++charcount;
+	size_t charcount = size + 1;
 
 	size_t addr = mConstPool << charcount;
-	mConstPool.write(str, sizeof(Char) * charcount);
+	mConstPool.write(str, sizeof(Char) * size);
+	mConstPool << Char(0);
 	return addr;
 }
 

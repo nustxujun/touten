@@ -13,6 +13,7 @@ namespace TT
 		TT_OPERATOR,
 		TT_DELIMITER,
 		TT_ASSGIN,
+		TT_REF,
 
 		TT_INTEGER,
 		TT_DOUBLE,
@@ -47,11 +48,11 @@ namespace TT
 	{
 		int i;
 		double d;
-		struct 
-		{
-			Char* b;
-			size_t s;//字符个数
-		}s;
+		//struct 
+		//{
+		//	const Char* b;
+		//	size_t s;//字符个数
+		//}s;
 	};
 
 	struct Token

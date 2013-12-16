@@ -31,11 +31,11 @@ namespace TT
 
 #define TT_NEW(T) new (TT_MALLOC(sizeof(T))) T
 
-#define TT_NEW_ARRAY(T, count) new (TT_MALLOC(sizeof(T) * count)) T[count]
+#define TT_NEW_ARRAY(T, count) new (TT_MALLOC(sizeof(T) * (count))) T[count]
 
-#define TT_DELETE(T, ptr) {ptr->~T(); TT_FREE(ptr);}
+#define TT_DELETE(T, ptr) {(ptr)->~T(); TT_FREE(ptr);}
 
-#define TT_DELETE_ARRAY(T,ptr, count) {T* tmp = ptr; for (int i = 0; i < count; ++i, ++tmp) tmp->~T(); TT_FREE(ptr);}
+#define TT_DELETE_ARRAY(T,ptr, count) {T* tmp = (ptr); for (int i = 0; i < count; ++i, ++tmp) tmp->~T(); TT_FREE(ptr);}
 
 
 

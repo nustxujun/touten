@@ -91,7 +91,6 @@
     <ClInclude Include="TTCall.h" />
     <ClInclude Include="TTCaster.h" />
     <ClInclude Include="TTConstantPool.h" />
-    <ClInclude Include="TTEnvironment.h" />
     <ClInclude Include="TTFunction.h" />
     <ClInclude Include="TTInterpreterCommon.h" />
     <ClInclude Include="TTLexer.h" />
@@ -114,7 +113,6 @@
     <ClCompile Include="TTBind.cpp" />
     <ClCompile Include="TTCaster.cpp" />
     <ClCompile Include="TTConstantPool.cpp" />
-    <ClCompile Include="TTEnvironment.cpp" />
     <ClCompile Include="TTInterpreterCommon.cpp" />
     <ClCompile Include="TTLexer.cpp" />
     <ClCompile Include="TTMemoryAllocator.cpp" />

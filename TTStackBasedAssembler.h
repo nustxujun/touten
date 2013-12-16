@@ -55,7 +55,7 @@ namespace TT
 		Scope::Ptr enterScope(const Char* name = 0);
 		Scope::Ptr leaveScope();
 
-		size_t stringToConstPool(const Char* str);
+		size_t stringToConstPool(const Char* str, size_t size);
 
 	private:
 		ScopeManager& mScopeMgr;
