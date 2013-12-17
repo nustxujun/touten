@@ -1,12 +1,12 @@
 #include "TTLexer.h"
-#include <math.h>
+#include "TTException.h"
+
 using namespace TT;
 
-#define TTLEXER_EXCEPT(t) { LexerError error;error.type = t; error.lineNum = mLineNum; throw error;}
-#define TTLEXER_ASSERT(e,t) { if (!(e)) { TTLEXER_EXCEPT(t) } }
+#define TTLEXER_EXCEPT(t) TT_EXCEPT(ET_SCANING_FAILED, EL_NORMAL, t, mLineNum)
 
 Lexer::Lexer(const Char* buff):
-	mRead(buff),mLineNum(0)
+	mRead(buff),mLineNum(1)
 {
 	
 }
@@ -167,7 +167,7 @@ void Lexer::parse(const Char*& read, Token& t)
 				if (getString(read, t))
 					return;
 
-				TTLEXER_EXCEPT(LET_UNKNOWN);
+				TTLEXER_EXCEPT("UnKnonwn symbol" + *read);
 			}
 			break;
 		}
@@ -278,7 +278,7 @@ bool Lexer::getNum(const Char*& read, Token& token)
 			case BIN:
 				if (*read <= '1')
 				{
-					TTLEXER_EXCEPT(LET_UNKNOWN);
+					TTLEXER_EXCEPT("invaild binary digit ");
 					return false;
 				}
 				
@@ -295,9 +295,9 @@ bool Lexer::getNum(const Char*& read, Token& token)
 		}
 		else if (*read == '.')
 		{
-			if (dotpos == 0 && type == DEX)
+			if (!(dotpos == 0 && type == DEX))
 			{
-				TTLEXER_EXCEPT(LET_UNKNOWN);
+				TTLEXER_EXCEPT("invaild float format");
 				return false;
 			}
 			dotpos = read;
@@ -321,7 +321,12 @@ bool Lexer::getNum(const Char*& read, Token& token)
 				*read == '_')
 			{
 				//以后加科学计数
-				TTLEXER_EXCEPT(LET_UNKNOWN); 
+				//switch (*read)
+				//{
+				//case 'E':
+				//}
+				TTLEXER_EXCEPT("unknown digit format"); 
+				return false;
 			}
 
 			token.lineNum = mLineNum;
@@ -329,7 +334,7 @@ bool Lexer::getNum(const Char*& read, Token& token)
 			{
 				if (type == ERR)
 				{
-					TTLEXER_EXCEPT(LET_UNKNOWN); 
+					TTLEXER_EXCEPT("unknown digit format");
 					return false;
 				}
 
@@ -416,7 +421,7 @@ bool Lexer::getString(const Char*& read, Token& token)
 			case '\n':
 			case '\r':
 			case eof:
-				TTLEXER_EXCEPT(LET_UNKNOWN); 
+				TTLEXER_EXCEPT("unexpected token in string,like \\n，\\r，eof"); 
 				return false;
 			default:
 				break;

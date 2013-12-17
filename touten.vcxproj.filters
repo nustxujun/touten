@@ -90,6 +90,9 @@
     <ClInclude Include="TTCall.h">
       <Filter>ex</Filter>
     </ClInclude>
+    <ClInclude Include="TTException.h">
+      <Filter>头文件</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="stdafx.cpp">
@@ -139,6 +142,9 @@
     </ClCompile>
     <ClCompile Include="TTBind.cpp">
       <Filter>ex</Filter>
+    </ClCompile>
+    <ClCompile Include="TTException.cpp">
+      <Filter>源文件</Filter>
     </ClCompile>
   </ItemGroup>
 </Project>

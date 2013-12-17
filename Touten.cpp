@@ -12,7 +12,9 @@
 #include "TTLexer.h"
 #include "TTParser.h"
 #include "TTStackBasedAssembler.h"
+#include "TTException.h"
 #include <set>
+
 
 //#define MEM_DEBUG
 
@@ -79,6 +81,7 @@ void Print(TT::String str)
 
 int _tmain(int argc, _TCHAR* argv[])
 {
+	try
 	{
 		TT::MemoryAllocator::setupMethod(alloc);
 		TT::Touten t;
@@ -91,7 +94,10 @@ int _tmain(int argc, _TCHAR* argv[])
 		b.call<void>(L"main");
 		getchar();
 	}
-
+	catch (const TT::Exception& e)
+	{
+		printf("\n[ line:%d ] %s", e.getLine(), e.getDesc().c_str());
+	}
 	assert(memsize == 0 && "leak detected");
 	//_CrtDumpMemoryLeaks();
 	return 0;

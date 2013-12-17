@@ -1,10 +1,11 @@
 #include "TTStackBasedAssembler.h"
+#include "TTObject.h"
 #include "TTTools.h"
+#include "TTException.h"
 using namespace TT;
 
 
-#define TTSBASSEMBLER_EXCPET(t) assert(0);
-#define TTSBASSEMBLER_WARNING(t) assert(0);
+#define TTSBASSEMBLER_EXCPET(t) TT_EXCEPT(ET_PARSING_FAILED, EL_NORMAL, t, 0)
 
 StackBasedAssembler::StackBasedAssembler(ScopeManager& sm, ConstantPool& cp):
 	mScopeMgr(sm), mConstPool(cp),
@@ -86,7 +87,7 @@ void StackBasedAssembler::visit(VarNode* node)
 			break;
 		default:
 			{
-				TTSBASSEMBLER_EXCPET("Unknown type");
+				TTSBASSEMBLER_EXCPET("Unknown error");
 			}
 		}
 	}

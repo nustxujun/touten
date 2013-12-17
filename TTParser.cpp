@@ -1,10 +1,11 @@
 #include "TTParser.h"
 #include "TTASTree.h"
+#include "TTException.h"
 #include <memory.h>
 
 using namespace TT;
 
-#define TTPARSER_EXCEPT(t) { ParserError error; throw error;}
+#define TTPARSER_EXCEPT(t, l) TT_EXCEPT(ET_PARSING_FAILED, EL_NORMAL, t, l)
 
 ASTNode::Ptr Parser::parse(ParserInput* input)
 {
@@ -54,7 +55,7 @@ ASTNode::Ptr Parser::parseDef(ParserInput* input, AccessType at)
 	case TT_EOS:
 		return 0;
 	default:
-		TTPARSER_EXCEPT(L"syntax error");
+		TTPARSER_EXCEPT("syntax error ", input->lookahead().lineNum);
 	}
 	return 0;
 }
@@ -73,7 +74,7 @@ ASTNode::Ptr Parser::parseVarlist(ParserInput* input, AccessType at)
 
 		if (t.type != TT_NAME)
 		{
-			TTPARSER_EXCEPT("unexpected token");
+			TTPARSER_EXCEPT("syntax error", t.lineNum);
 			return vl;
 		}
 
@@ -120,7 +121,7 @@ ASTNode::Ptr Parser::parseFunction(ParserInput* input, AccessType at)
 	
 	if (!checkDelimiter(t, '('))
 	{
-		TTPARSER_EXCEPT("need (");
+		TTPARSER_EXCEPT("need (", t.lineNum);
 		return 0;
 	}
 
@@ -134,7 +135,7 @@ ASTNode::Ptr Parser::parseFunction(ParserInput* input, AccessType at)
 			t = input->next();
 			if (t.type != TT_NAME)
 			{
-				TTPARSER_EXCEPT("unexpected token");
+				TTPARSER_EXCEPT("syntax error", t.lineNum);
 				return 0;
 			}
 
@@ -148,7 +149,7 @@ ASTNode::Ptr Parser::parseFunction(ParserInput* input, AccessType at)
 			{
 				if (checkDelimiter(t, ')')) break;
 				
-				TTPARSER_EXCEPT("unexpected token£¬ need , or )");
+				TTPARSER_EXCEPT("need , or )", t.lineNum);
 				return 0;
 			}
 		}
@@ -158,7 +159,7 @@ ASTNode::Ptr Parser::parseFunction(ParserInput* input, AccessType at)
 
 	if (!checkDelimiter(input->next(), '{' ))
 	{
-		TTPARSER_EXCEPT("need function body");
+		TTPARSER_EXCEPT("need function body", input->lookahead().lineNum);
 		return 0;
 	}
 
@@ -166,7 +167,7 @@ ASTNode::Ptr Parser::parseFunction(ParserInput* input, AccessType at)
 
 	if (!checkDelimiter(input->lookahead(), '}'))
 	{
-		TTPARSER_EXCEPT("need }");
+		TTPARSER_EXCEPT("need }", input->lookahead().lineNum);
 		return 0;
 	}
 	input->next();
@@ -264,7 +265,7 @@ ASTNode::Ptr Parser::parseStat(ParserInput* input)
 		break;
 	}
 
-	TTPARSER_EXCEPT("unexpect token");
+	TTPARSER_EXCEPT("syntax error", input->lookahead().lineNum);
 	return 0;
 }
 
@@ -295,7 +296,7 @@ ASTNode::Ptr Parser::parseVar(ParserInput* input, AccessType deftype)
 			ASTNode::Ptr index = parseExpr(input);
 			if (index.isNull())
 			{
-				TTPARSER_EXCEPT("need index");
+				TTPARSER_EXCEPT("need index", input->lookahead().lineNum);
 				return 0;
 			}
 
@@ -303,7 +304,7 @@ ASTNode::Ptr Parser::parseVar(ParserInput* input, AccessType deftype)
 			
 			if (!checkDelimiter(input->next(),']'))
 			{
-				TTPARSER_EXCEPT("need ]");
+				TTPARSER_EXCEPT("need ]", input->lookahead().lineNum);
 				return 0;
 			}		
 		}
@@ -313,7 +314,7 @@ ASTNode::Ptr Parser::parseVar(ParserInput* input, AccessType deftype)
 			Token t = input->next();
 			if (t.type != TT_NAME)
 			{
-				TTPARSER_EXCEPT("unexpect token");
+				TTPARSER_EXCEPT("syntax error", t.lineNum);
 				return 0;
 			}
 			ConstNode* cn = new ConstNode;
@@ -367,14 +368,14 @@ ASTNode::Ptr Parser::parseExpr(ParserInput* input,  BinopStack* stack)
 				expr = parseExpr(input);
 				if (!checkDelimiter(input->next(), ')'))
 				{
-					TTPARSER_EXCEPT("need )");
+					TTPARSER_EXCEPT("need )", input->lookahead().lineNum);
 					return 0;
 				}
 			}
 			//else if (checkDelimiter(look, '{'))
 			//	expr = parseField(input, AT_LOCAL);
 			
-			TTPARSER_EXCEPT("unexpected token");
+			TTPARSER_EXCEPT("syntax error", input->lookahead().lineNum);
 			return 0;
 		}
 		break;
@@ -382,7 +383,7 @@ ASTNode::Ptr Parser::parseExpr(ParserInput* input,  BinopStack* stack)
 		expr = parseUnop(input);
 		break;
 	default:
-		TTPARSER_EXCEPT("unexpected token");
+		TTPARSER_EXCEPT("syntax error",look.lineNum);
 		return 0;
 	}
 
@@ -483,7 +484,7 @@ ASTNode::Ptr Parser::parseAssgin(ParserInput* input, ASTNode::Ptr pre )
 				if (!checkDelimiter(t, ','))
 				{
 					if (checkDelimiter(t, ']')) break;
-					TTPARSER_EXCEPT("unexpected token");
+					TTPARSER_EXCEPT("need var between , and ]", input->lookahead().lineNum);
 					return 0;
 				}
 			}
@@ -493,7 +494,7 @@ ASTNode::Ptr Parser::parseAssgin(ParserInput* input, ASTNode::Ptr pre )
 			last->obj = parseVar(input);
 			if (last->obj.isNull()) 
 			{
-				TTPARSER_EXCEPT("cant parse var");
+				TTPARSER_EXCEPT("parse var failed, need var", input->lookahead().lineNum);
 				return 0;
 			}
 		}
@@ -506,14 +507,14 @@ ASTNode::Ptr Parser::parseAssgin(ParserInput* input, ASTNode::Ptr pre )
 		an->isRef = true;
 	else
 	{
-		TTPARSER_EXCEPT("need = or &=");
+		TTPARSER_EXCEPT("need = or &=",t.lineNum);
 		return 0;
 	}
 
 	an->right = parseExpr(input);
 	if (an->right.isNull())
 	{
-		TTPARSER_EXCEPT("parse expr fail");
+		TTPARSER_EXCEPT("parse expr fail, need a expr", input->lookahead().lineNum);
 		return 0;
 	}
 
@@ -535,7 +536,7 @@ ASTNode::Ptr Parser::parseUnop(ParserInput* input)
 		type = OT_NS;
 		break;
 	default:
-		TTPARSER_EXCEPT("unexpected token");
+		TTPARSER_EXCEPT("syntax error", input->lookahead().lineNum);
 		return 0;
 	}
 	ASTNode::Ptr expr = parseExpr(input);
@@ -558,20 +559,20 @@ ASTNode::Ptr Parser::parseLoop(ParserInput* input)
 		{
 			if (!checkDelimiter(input->next(), '('))
 			{
-				TTPARSER_EXCEPT("need (");
+				TTPARSER_EXCEPT("need (", input->lookahead().lineNum);
 				return 0;
 			}
 			
 			ASTNode::Ptr expr = parseExpr(input);
 			if (expr.isNull())
 			{
-				TTPARSER_EXCEPT("fail to parse expr");
+				TTPARSER_EXCEPT("fail to parse expr, need expr", input->lookahead().lineNum);
 				return 0;
 			}
 
 			if (!checkDelimiter(input->next(), ')'))
 			{
-				TTPARSER_EXCEPT("need )");
+				TTPARSER_EXCEPT("need )", input->lookahead().lineNum);
 				return 0;
 			}
 
@@ -582,7 +583,7 @@ ASTNode::Ptr Parser::parseLoop(ParserInput* input)
 
 				if (!checkDelimiter(input->next(), '}'))
 				{
-					TTPARSER_EXCEPT("need }");
+					TTPARSER_EXCEPT("need }", input->lookahead().lineNum);
 					return 0;
 				}
 			}
@@ -600,7 +601,7 @@ ASTNode::Ptr Parser::parseLoop(ParserInput* input)
 		break;
 	case TT_FOR:
 	case TT_DO:
-		TTPARSER_EXCEPT("for and do isnot supported");
+		TTPARSER_EXCEPT("for and do isnot supported",t.lineNum);
 		break;
 
 	}
@@ -621,7 +622,7 @@ ASTNode::Ptr Parser::parseCond(ParserInput* input)
 		{//condition
 			if (!checkDelimiter(input->next(), '('))
 			{
-				TTPARSER_EXCEPT("need (");
+				TTPARSER_EXCEPT("need (", input->lookahead().lineNum);
 				return 0;		
 			}
 
@@ -629,13 +630,13 @@ ASTNode::Ptr Parser::parseCond(ParserInput* input)
 
 			if (cin->expr.isNull() ) 
 			{
-				TTPARSER_EXCEPT("need expr");
+				TTPARSER_EXCEPT("parse expr failed, need expr", input->lookahead().lineNum);
 				return 0;
 			}
 
 			if (!checkDelimiter(input->next(), ')'))
 			{
-				TTPARSER_EXCEPT("need )");
+				TTPARSER_EXCEPT("need )", input->lookahead().lineNum);
 				return 0;
 			}
 		}
@@ -646,7 +647,7 @@ ASTNode::Ptr Parser::parseCond(ParserInput* input)
 			cin->block = parseBlock(input);
 			if (!checkDelimiter(input->next(), '}'))
 			{
-				TTPARSER_EXCEPT("need }");
+				TTPARSER_EXCEPT("need }", input->lookahead().lineNum);
 				return 0;
 			}
 		}
@@ -670,7 +671,7 @@ ASTNode::Ptr Parser::parseCond(ParserInput* input)
 	}
 	else if (t.type == TT_SWITCH)
 	{
-		TTPARSER_EXCEPT("switch isnot supported");
+		TTPARSER_EXCEPT("switch is not supported",t.lineNum);
 	}
 	return 0;
 }
@@ -692,7 +693,7 @@ ASTNode::Ptr Parser::parseFuncCall(ParserInput* input, bool needret,  ASTNode::P
 
 	if (!checkDelimiter(input->next(), '('))
 	{
-		TTPARSER_EXCEPT("unexpected token£¬ need  )");
+		TTPARSER_EXCEPT(" need  )", input->lookahead().lineNum);
 		return 0;
 	}
 
@@ -712,7 +713,7 @@ ASTNode::Ptr Parser::parseFuncCall(ParserInput* input, bool needret,  ASTNode::P
 			{
 				if (checkDelimiter(t, ')')) break;
 
-				TTPARSER_EXCEPT("unexpected token£¬ need , or )");
+				TTPARSER_EXCEPT(" need , or )", input->lookahead().lineNum);
 				return 0;
 			}
 		}
@@ -747,7 +748,7 @@ ASTNode::Ptr Parser::parseConst(ParserInput* input)
 	case TT_DOUBLE: cn->type = CT_DOUBLE; break;
 	case TT_STRING:	cn->type = CT_STRING; break;
 	default:
-		TTPARSER_EXCEPT("unexpected token£¬ need constant");
+		TTPARSER_EXCEPT("need a constant",t.lineNum);
 		return 0;
 	}
 

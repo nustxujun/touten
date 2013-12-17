@@ -14,12 +14,8 @@ namespace TT
 	typedef wchar_t Char;
 	typedef std::wstring String;
 	
-#define TTMap ::std::map
+#define TTMap ::std::hash_map
 	
 }
-
-#include "TTObject.h"
-
-#define MAX_VAR_NAME_LEN 128
 
 #endif

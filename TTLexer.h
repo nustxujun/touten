@@ -63,26 +63,6 @@ namespace TT
 		TokenValue val;
 	};
 
-
-	enum LexerErrorType
-	{
-		LET_UNKNOWN,
-	};
-
-	class LexerError
-	{
-	public:
-		LexerErrorType type;
-		size_t lineNum;
-		const Char* string;
-		size_t size;
-
-		~LexerError()
-		{
-		}
-	};
-
-
 	class Lexer
 	{
 		static const int eof = 0;

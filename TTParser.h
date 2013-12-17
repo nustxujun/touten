@@ -19,9 +19,6 @@ namespace TT
 		virtual Token lookahead(size_t index = 0) = 0;
 	};
 
-	class ParserError
-	{};
-
 	class Parser
 	{
 	public:

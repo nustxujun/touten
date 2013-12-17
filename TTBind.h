@@ -78,7 +78,7 @@ namespace TT
 	private:
 		Touten* mTT;
 
-		typedef std::hash_map<String, Functor*> Factors;
+		typedef TTMap<String, Functor*> Factors;
 		Factors mFactors;
 	};
 }
