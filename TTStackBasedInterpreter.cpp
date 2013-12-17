@@ -153,6 +153,7 @@ void StackBasedInterpreter::execute(const ConstantPool& constpool, const char* c
 				case LOAD_GLOBAL: env = &mGlobalEnv;break;
 				}
 				const Object& name = *getArg(0);
+				Caster::cast(*env, OT_ARRAY);
 				ObjectPtr obj = (*env->val.arr)[name.val.str.cont];
 				popOpr();
 				pushOpr(obj);
@@ -250,6 +251,12 @@ void StackBasedInterpreter::execute(const ConstantPool& constpool, const char* c
 				popOpr();
 				pushOpr(elem);
 
+			}
+			break;
+		case ATTACH:
+			{
+				Object& obj = *getArg(0);
+				curenv = &obj;
 			}
 			break;
 		case CALL:

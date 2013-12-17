@@ -2,7 +2,6 @@
 #define _TTLexer_H_
 
 #include "ToutenCommon.h"
-#include "TTStaticArea.h"
 
 namespace TT
 {
@@ -28,7 +27,6 @@ namespace TT
 		TT_LOCAL,
 		TT_SHARED,
 		TT_FUNCTION,
-		//TT_FIELD,
 		TT_WHILE,
 		TT_DO,
 		TT_FOR,
@@ -89,7 +87,7 @@ namespace TT
 	{
 		static const int eof = 0;
 	public :
-		Lexer(const Char* buff, StaticArea& sa);
+		Lexer(const Char* buff);
 		Token next();
 
 	private:
@@ -106,7 +104,6 @@ namespace TT
 	private:
 		const Char* mRead;
 		size_t mLineNum;
-		StaticArea& mStaticArea;
 	};
 }
 #endif

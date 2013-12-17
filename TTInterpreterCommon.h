@@ -24,6 +24,7 @@ namespace TT
 		STORE,
 		STORE_ARRAY,
 		ADDR,
+		ATTACH,
 
 		//func
 		CALL,

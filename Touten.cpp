@@ -9,7 +9,6 @@
 #include "TTObject.h"
 #include "TTMemoryAllocator.h"
 #include "TTCaster.h"
-#include "TTStaticArea.h"
 #include "TTLexer.h"
 #include "TTParser.h"
 #include "TTStackBasedAssembler.h"
@@ -113,8 +112,7 @@ bool Touten::loadFile(const String& name)
 	TT::Char* b = new TT::Char[size+1]();
 	f.read(b, size + 1);
 	
-	StaticArea sa;
-	Lexer lexer(b, sa);
+	Lexer lexer(b);
 
 	struct Input: public ParserInput 
 	{

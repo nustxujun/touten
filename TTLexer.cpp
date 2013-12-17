@@ -5,8 +5,8 @@ using namespace TT;
 #define TTLEXER_EXCEPT(t) { LexerError error;error.type = t; error.lineNum = mLineNum; throw error;}
 #define TTLEXER_ASSERT(e,t) { if (!(e)) { TTLEXER_EXCEPT(t) } }
 
-Lexer::Lexer(const Char* buff, StaticArea& sa):
-	mRead(buff),mLineNum(0), mStaticArea(sa)
+Lexer::Lexer(const Char* buff):
+	mRead(buff),mLineNum(0)
 {
 	
 }
@@ -70,7 +70,7 @@ void Lexer::parse(const Char*& read, Token& t)
 				t.lineNum = mLineNum;
 			}
 			return;
-		case '{':case '}':case '[':	case ']':case ';':case ',':case '(':case ')':
+		case '{':case '}':case '[':	case ']':case ';':case ',':case '(':case ')':case ':':
 			{
 				t.type = TT_DELIMITER;
 				t.string = read++;
@@ -436,7 +436,6 @@ bool Lexer::getReserved(const Char*& read, Token& token)
 		L"local", 
 		L"shared",
 		L"function",
-		//L"field",
 		L"while",
 		L"do",
 		L"for",

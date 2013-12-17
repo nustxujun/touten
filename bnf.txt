@@ -24,7 +24,7 @@ funcbody ::= [ '(' parlist ')'] '{' block'}'
 parlist ::= var { ',' var}
 
 
-funcall ::=  var '(' [args] ')'   ///存在[] . 操作一定是var,否则不明，所以这里特殊处理下
+funcall ::=  var [':' var ] ( '(' [args] ')'   ///':'的方式快速函数调用
 
 
 args ::= exp{',' exp}

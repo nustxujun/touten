@@ -119,6 +119,7 @@ namespace TT
 		ASTNODE_VISIT_FUNC_DEC;
 	public:
 		ASTNode::Ptr var;
+		ASTNode::Ptr func;
 		ASTNodeList::Ptr paras;
 		bool needrets;
 	};

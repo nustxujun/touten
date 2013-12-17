@@ -7,6 +7,7 @@
 #include "TTConstantPool.h"
 #include "TTInterpreterCommon.h"
 #include "TTStackBasedAssembler.h"
+#include "TTTools.h"
 
 namespace TT
 {
@@ -55,7 +56,7 @@ namespace TT
 		Scope::Ptr enterScope(const Char* name = 0);
 		Scope::Ptr leaveScope();
 
-		size_t stringToConstPool(const Char* str, size_t size);
+		size_t stringToConstPool(const String& str);
 
 	private:
 		ScopeManager& mScopeMgr;
@@ -73,6 +74,33 @@ namespace TT
 		BackFill mBackFill;
 
 		void addbackfill(Symbol*, size_t instr);
+
+
+
+		class hash_compare
+		{	
+		public:
+			enum
+			{	// parameters for hash table
+				bucket_size = 1		// 0 < bucket_size
+			};
+
+			size_t operator()(const Char* key) const
+			{	
+				size_t nHash = 0;
+				while (*key)
+					nHash = (nHash << 5) + nHash + *key++;
+				return nHash;
+			}
+
+			bool operator()(const Char* k1, const Char* k2) const
+			{	
+				return Tools::less(k1, k2);
+			}
+		};
+
+		typedef std::hash_map<const Char*, size_t, hash_compare> ConstStringMap;
+		ConstStringMap mConstStringMap;
 		
 	};
 }

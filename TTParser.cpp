@@ -679,16 +679,22 @@ ASTNode::Ptr Parser::parseFuncCall(ParserInput* input, bool needret,  ASTNode::P
 {
 	ASTNode::Ptr var = pre.isNull() ? parseVar(input) : pre;
 
+	FuncCallNode* fn = new FuncCallNode();
+	ASTNode::Ptr f = fn;
+	fn->var = var;
+	fn->needrets = needret;
+
+	if (checkDelimiter(input->lookahead(), ':'))
+	{
+		input->next();
+		fn->func = parseVar(input);
+	}
+
 	if (!checkDelimiter(input->next(), '('))
 	{
 		TTPARSER_EXCEPT("unexpected token£¬ need  )");
 		return 0;
 	}
-
-	FuncCallNode* fn = new FuncCallNode();
-	ASTNode::Ptr f = fn;
-	fn->var = var;
-	fn->needrets = needret;
 
 	if (!checkDelimiter(input->lookahead(), ')'))
 	{
