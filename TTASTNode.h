@@ -13,14 +13,11 @@ namespace TT
 		typedef SharedPtr<ASTNode> Ptr;
 
 	public :
-		virtual void visit(ASTNodeVisitor* visitor) = 0;
-		
-		void* operator new(size_t size)
+		virtual ~ASTNode()
 		{
-			static size_t memcost = 0;
-			memcost += size;
-			return malloc(size);
 		}
+		virtual void visit(ASTNodeVisitor* visitor) = 0;
+
 	};
 
 }

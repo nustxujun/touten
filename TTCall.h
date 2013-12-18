@@ -6,11 +6,9 @@ namespace TT
 	template<size_t ArgsNum>
 	struct CallImpl;
 
-	template<class ... Args>
+	template<class Tuple>
 	struct ArgsConverter
 	{
-		typedef std::tuple<Args...> Tuple;
-
 		template<int index>
 		static void convert(Tuple& t, const ObjectPtr* paras)
 		{
@@ -30,27 +28,25 @@ namespace TT
 	struct Call
 	{
 		template<class R, class ... Args, class F>
-		static void call(F* func, std::tuple<Args...>& t, Object* ret,
+		static void call(F* func, typename F::Tuple& t, Object* ret,
 			typename std::enable_if<!std::is_void<R>::value, R>::type* = nullptr)//deduce any type with out void
 		{
 			*ret = CallImpl<sizeof...(Args)>::call<R>(func, t);
 		}
 
 		template<class R, class ... Args, class F>
-		static void call(F* func, std::tuple<Args...>& t, Object* ret,
+		static void call(F* func, typename F::Tuple& t, Object* ret,
 			typename std::enable_if<std::is_void<R>::value, R>::type* = nullptr)//deduce void 
 		{
 			CallImpl<sizeof...(Args)>::call<R>(func, t);
 		}
 	};
 
-
-
 	template<>
 	struct CallImpl<0>
 	{
-		template<class R, class F, class ... Args>
-		static R call(F* func, std::tuple<Args...>& para)
+		template<class R, class F>
+		static R call(F* func, typename F::Tuple& para)
 		{
 			return func->call();
 		}
@@ -59,8 +55,8 @@ namespace TT
 	template<>
 	struct CallImpl<1>
 	{
-		template<class R, class F, class ... Args>
-		static R call(F* func, std::tuple<Args...>& para)
+		template<class R, class F>
+		static R call(F* func, typename F::Tuple& para)
 		{
 			return func->call(std::get<0>(para));
 		}
@@ -69,8 +65,8 @@ namespace TT
 	template<>
 	struct CallImpl<2>
 	{
-		template<class R, class F, class ... Args>
-		static R call(F* func, std::tuple<Args...>& para)
+		template<class R, class F>
+		static R call(F* func, typename F::Tuple& para)
 		{
 			return func->call(std::get<0>(para), std::get<1>(para));
 		}
@@ -79,8 +75,8 @@ namespace TT
 	template<>
 	struct CallImpl<3>
 	{
-		template<class R, class F, class ... Args>
-		static R call(F* func, std::tuple<Args...>& para)
+		template<class R, class F>
+		static R call(F* func, typename F::Tuple& para)
 		{
 			return func->call(std::get<0>(para), std::get<1>(para), std::get<2>(para));
 		}
@@ -89,14 +85,12 @@ namespace TT
 	template<>
 	struct CallImpl<4>
 	{
-		template<class R, class F, class ... Args>
-		static R call(F* func, std::tuple<Args...>& para)
+		template<class R, class F>
+		static R call(F* func, typename F::Tuple& para)
 		{
 			return func->call(std::get<0>(para), std::get<1>(para), std::get<2>(para), std::get<3>(para));
 		}
 	};
-
-
 
 
 }

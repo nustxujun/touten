@@ -2,6 +2,7 @@
 #define _TTCaster_H_
 
 #include "TTObject.h"
+#include "TTException.h"
 
 namespace TT
 {
@@ -19,7 +20,7 @@ namespace TT
 		template<class Type>
 		static Type cast(const Object& o)
 		{
-			assert(0 && "unexpected type");
+			TT_EXCEPT(ET_UNKNOWN, EL_NORMAL, "unexpected type", 0);
 			return Type();
 		}
 

@@ -1,6 +1,7 @@
 #include "TTCaster.h"
 #include "TTTools.h"
 #include "TTMemoryAllocator.h"
+#include "TTException.h"
 
 using namespace TT;
 
@@ -27,7 +28,7 @@ void Caster::cast(Object& o, ObjectType otype)
 	case OT_ARRAY:
 		castToArrayObject(o); break;
 	default:
-		assert(0 && "unexpected type");
+		TT_EXCEPT(ET_UNKNOWN, EL_NORMAL, "unexpected type", 0);
 		castToNullObject(o);
 	}
 }

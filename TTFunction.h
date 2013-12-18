@@ -9,12 +9,16 @@ namespace TT
 	template<class R, class ... Args>
 	class Function : public Functor
 	{
+	public :
+		//去const去volatile去reference
+		typedef std::tuple<typename std::remove_cv<typename std::remove_reference<Args>::type>::type...> Tuple;
+
 	public:
 		void operator()(const ObjectPtr* paras, int paracount, Object* ret)
 		{
 			assert(sizeof...(Args) <= paracount);//脚本中的需要抛异常
-			std::tuple<Args...> t;
-			ArgsConverter<Args...>::convert<sizeof...(Args)-1>(t, paras);
+			Tuple t;
+			ArgsConverter<Tuple>::convert<sizeof...(Args)-1>(t, paras);
 
 			Call::call<R, Args...>(this, t, ret);
 		}

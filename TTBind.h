@@ -3,6 +3,7 @@
 
 #include "Touten.h"
 #include "TTFunction.h"
+#include "TTException.h"
 
 namespace TT
 {
@@ -22,7 +23,8 @@ namespace TT
 			if (!ret.second)
 			{
 				delete f;
-				assert(0);
+				
+				TT_EXCEPT(ET_UNKNOWN, EL_NORMAL, "same function name", 0);
 				return;
 			}
 			mTT->registerFunction(name, f);
@@ -37,7 +39,7 @@ namespace TT
 			if (!ret.second)
 			{
 				delete f;
-				assert(0);
+				TT_EXCEPT(ET_UNKNOWN, EL_NORMAL, "same function name", 0);
 				return;
 
 			}

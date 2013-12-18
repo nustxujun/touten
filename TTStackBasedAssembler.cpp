@@ -95,7 +95,7 @@ void StackBasedAssembler::visit(VarNode* node)
 	{
 		if (hasindex | !mIsFuncall )
 		{
-			Instruction instr = LOAD;
+			Instruction instr = LOAD_LOCAL;
 			Scope::Ptr scope;
 			switch (node->type)
 			{

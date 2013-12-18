@@ -8,7 +8,6 @@ namespace TT
 	enum Instruction
 	{
 		//var
-		LOAD,
 		LOAD_SHARED,
 		LOAD_GLOBAL,
 		LOAD_LOCAL,
@@ -28,11 +27,9 @@ namespace TT
 
 		//func
 		CALL,
-		CALL_HOST,
 		//opt
 	
 		RETURN,
-		RETURN_ARRAY,
 
 		//
 		TEST,

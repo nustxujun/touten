@@ -110,6 +110,7 @@
     <ClInclude Include="TTType.h" />
   </ItemGroup>
   <ItemGroup>
+    <ClCompile Include="main.cpp" />
     <ClCompile Include="stdafx.cpp" />
     <ClCompile Include="Touten.cpp" />
     <ClCompile Include="TTASTree.cpp" />

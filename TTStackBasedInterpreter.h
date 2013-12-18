@@ -43,26 +43,15 @@ namespace TT
 	{
 	public :
 		StackBasedInterpreter();
-		
 		void execute(const ConstantPool& cp, const char* codes, size_t parasCount, const ObjectPtr* paras, Object* obj);
 
 	private:
-		void popOpr();
-		//void pushOpr(Object* obj);
-		void pushOpr(const Object& obj);
-		void pushOpr(const ObjectPtr& obj = ObjectPtr());
-
-
-		CallFrame& pushCallFrame(const char* begin, const char* current, bool bret);
-		void popCallFrame(ObjectPtr& ret);
-
 		void compareOpt(const Object& o1, const Object& o2, Instruction instr, Object& o);
 		void normalOpt(const Object& o1, const Object& o2, Instruction instr, Object& o);
 		void boolOpt(const Object& o1, const Object& o2, Instruction instr, Object& o);
-		void autoOpt(const Object& o1, const Object& o2, Instruction instr);
+
 	private:
 
-		CallStack mCallStack;
 		Object mGlobalEnv;
 	};
 
