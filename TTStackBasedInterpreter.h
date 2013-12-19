@@ -4,7 +4,6 @@
 #include "TTInterpreterCommon.h"
 #include "TTConstantPool.h"
 #include "TTObject.h"
-#include "TTEnvironment.h"
 #include "TTCaster.h"
 #include <stack>
 

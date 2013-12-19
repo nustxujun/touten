@@ -10,7 +10,7 @@ namespace TT
 		typedef void* (*AllocMethod) (void* optr, size_t nsize);
 
 	public :
-		static void setupMethod(AllocMethod method = defaultAlloc);
+		static void setupMethod(AllocMethod method );
 
 		static void* alloc(size_t size);
 		static void* realloc(void* ptr, size_t nsize);

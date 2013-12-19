@@ -2,7 +2,6 @@
 #define _TTStackBasedAssembler_H_
 
 #include "TTASTree.h"
-#include "TTAssembler.h"
 #include "TTScope.h"
 #include "TTConstantPool.h"
 #include "TTInterpreterCommon.h"

@@ -2,7 +2,7 @@
 #include <malloc.h>
 
 using namespace TT;
-MemoryAllocator::AllocMethod MemoryAllocator::allocMethod = 0;
+MemoryAllocator::AllocMethod MemoryAllocator::allocMethod = defaultAlloc;
 
 void MemoryAllocator::setupMethod(AllocMethod method)
 {
