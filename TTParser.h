@@ -5,7 +5,6 @@
 #include "TTLexer.h"
 #include "TTASTNode.h"
 #include "TTType.h"
-#include <stack>
 
 namespace TT
 {

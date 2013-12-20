@@ -9,6 +9,8 @@
 #include <hash_map>
 #include <vector>
 #include <set>
+#include <stack>
+
 namespace TT
 {
 	typedef wchar_t Char;

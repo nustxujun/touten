@@ -3,7 +3,6 @@
 
 #include "ToutenCommon.h"
 #include "TTSymbolMap.h"
-#include <stack>
 #include "SharedPtr.h"
 namespace TT
 {
