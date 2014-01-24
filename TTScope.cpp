@@ -51,8 +51,8 @@ size_t Scope::writeCode(const void* buff, size_t size)
 	return head;
 }
 
-const String ScopeManager::anonymous_scope = L"__anonymous_scope";
-const String ScopeManager::global_scope = L"__global_scope";
+const Char* ScopeManager::anonymous_scope = L"__anonymous_scope";
+const Char* ScopeManager::global_scope = L"__global_scope";
 
 ScopeManager::ScopeManager()
 {

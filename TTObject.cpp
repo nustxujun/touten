@@ -74,109 +74,221 @@ TTString::operator const Char*()const
 }
 
 
-Object::Object():type(OT_NULL)
+
+ValuePtr::ValuePtr(ObjectType ot)
+{
+	mVal = (Value*)TT_MALLOC(sizeof(Value));
+	mCount = TT_NEW(size_t)(1);
+
+	mVal->type = ot;
+
+}
+
+ValuePtr::ValuePtr(const ValuePtr& ap)
+{
+	mVal = ap.mVal;
+	mCount = ap.mCount;
+	++(*mCount);
+
+}
+
+ValuePtr::~ValuePtr()
+{
+	setNull();
+}
+
+void ValuePtr::copy(const ValuePtr& val)
+{
+	releaseVal();
+	switch (val->type)
+	{
+	case OT_ARRAY:
+		{
+			mVal->arr = TT_NEW(Array)(false);
+			*mVal->arr = *val->arr;
+		}
+		break;
+	case OT_STRING:
+		{
+			mVal->str.size = val->str.size;
+			mVal->str.cont = Tools::cloneString(val->str.cont, mVal->str.size);
+		}
+		break;
+	default:
+		*mVal = *(val);
+		break;
+	}
+
+	mVal->type = val->type;
+}
+
+void ValuePtr::releaseVal()
+{
+	switch (mVal->type)
+	{
+	case OT_ARRAY:
+		TT_DELETE(Array, mVal->arr);
+		break;
+	case OT_STRING:
+		TT_FREE(mVal->str.cont);
+		break;
+	}
+
+	mVal->type = OT_NULL;
+
+}
+
+void ValuePtr::setNull()
+{
+	if (isNull()) return;
+	if (*mCount == 1)
+	{
+		releaseVal();
+		TT_FREE(mVal);
+		TT_FREE(mCount);
+		mCount = nullptr;
+	}
+	else
+		--(*mCount);
+}
+
+bool ValuePtr::isNull()const
+{
+	return (mCount == nullptr);
+}
+
+void ValuePtr::operator = (const ValuePtr& ap)
+{
+	setNull();
+	mVal = ap.mVal;
+	mCount = ap.mCount;
+	++(*mCount);
+}
+
+
+Value& ValuePtr::operator*()const
+{
+	return *mVal;
+}
+
+Value* ValuePtr::operator->()const
+{
+	return mVal;
+}
+
+
+Object::Object() :
+	val(OT_NULL)
 {
 
 }
 
 Object::Object(const Object& obj):
-	type(OT_NULL)
+	val(OT_NULL)
 {
 	*this = obj;
 }
 
 Object::Object(bool v):
-	type( v? OT_TRUE: OT_FALSE)
+	val(v ? OT_TRUE : OT_FALSE)
 {
 }
 
 Object::Object(int v):
-	type(OT_INTEGER) 
+	val(OT_INTEGER)
 {
-	val.i = v;
+	val->i = v;
 }
 
 Object::Object(double v):
-	type(OT_DOUBLE)
+	val(OT_DOUBLE)
 {
-	val.d = v;
+	val->d = v;
+}
+
+Object::Object(const Char* str) : 
+	val(OT_STRING)
+{
+	val->str.cont = Tools::cloneString(str, &val->str.size);
 }
 
 Object::Object(const Char* str, size_t size):
-	type(OT_STRING)
+	val(OT_STRING)
 {
-	val.str.size = size;
-	val.str.cont = Tools::cloneString(str, size);
+	val->str.size = size;
+	val->str.cont = Tools::cloneString(str, size);
 }
 
 Object::Object(FunctionValue v):
-	type(OT_FUNCTION)
+	val(OT_FUNCTION)
 {
-	val.func = v;
+	val->func = v;
 }
 
 void Object::swap(Object& obj)
 {
 	std::swap(val, obj.val);
-	std::swap(type, obj.type);
 }
 
 
 Object::~Object()
 {
-	switch (type)
-	{
-	case OT_ARRAY:
-		TT_DELETE(ArrayPtr, val.arr);
-		break;
-	case OT_STRING:
-		TT_FREE(val.str.cont);
-		break;
-	}
-	type = OT_NULL;
-	
+	//switch (type)
+	//{
+	//case OT_ARRAY:
+	//	TT_DELETE(Array, val->arr);
+	//	break;
+	//case OT_STRING:
+	//	TT_FREE(val.str.cont);
+	//	break;
+	//}
+	//type = OT_NULL;
+	//
 }
 
 Object& Object::operator=(const Object& obj)
 {
-	this->~Object();
-	switch (obj.type)
-	{
-	case OT_ARRAY:
-		{
-			val.arr = TT_NEW(ArrayPtr)(false);
-			val.arr->copy( *obj.val.arr);
-		}
-		break;
-	case OT_STRING:
-		{
-			val.str.size = obj.val.str.size;
-			val.str.cont = Tools::cloneString(obj.val.str.cont, val.str.size);
-		}
-		break;
-	default:
-		val = obj.val;
-		break;
-	}
+	//this->~Object();
+	//switch (obj.type)
+	//{
+	//case OT_ARRAY:
+	//	{
+	//		val.arr = TT_NEW(Array)(false);
+	//		*val.arr = *obj.val.arr;
+	//	}
+	//	break;
+	//case OT_STRING:
+	//	{
+	//		val.str.size = obj.val.str.size;
+	//		val.str.cont = Tools::cloneString(obj.val.str.cont, val.str.size);
+	//	}
+	//	break;
+	//default:
+	//	*val = *(obj.val);
+	//	break;
+	//}
 
-	type = obj.type;
+	//type = obj.type;
+
+	val.copy(obj.val);
 	return *this;
 }
 
 void Object::reference(const Object& obj)
 {
-	switch (obj.type)
-	{
-	case OT_ARRAY:
-		{
-			this->~Object();
-			val.arr = TT_NEW(ArrayPtr)(*obj.val.arr);
-			type = obj.type;
-		}
-		break;
-	default:
-		*this = obj;
-	}
+	val = obj.val;
+	//switch (obj.type)
+	//{
+	//case OT_ARRAY:
+	//	{
+	//		this->~Object();
+	//		val.arr = TT_NEW(ArrayPtr)(*obj.val.arr);
+	//		type = obj.type;
+	//	}
+	//	break;
+	//default:
+	//	*this = obj;
+	//}
 }
 
 
@@ -427,7 +539,7 @@ void Array::convertToHashMap()
 
 	for (size_t i = 0; head != mTail; ++head, ++i)
 	{
-		if (head->obj.isNull() || head->obj->type == OT_NULL) continue;
+		if (head->obj.isNull() || head->obj->val->type == OT_NULL) continue;
 		String key = Tools::toString(i);
 
 		tmp[key.c_str()] = head->obj;
@@ -446,72 +558,72 @@ size_t Array::hash(const Char* key)const
 
 }
 
-ArrayPtr::ArrayPtr(bool bhash)
-{
-	mArray = TT_NEW(Array)(bhash);
-	mCount = TT_NEW(size_t)(1);
-}
-
-ArrayPtr::ArrayPtr(const ArrayPtr& ap)
-{
-	mArray = ap.mArray;
-	mCount = ap.mCount;
-	++(*mCount);
-
-}
-
-ArrayPtr::~ArrayPtr()
-{
-	setNull();
-}
-
-ObjectPtr ArrayPtr::operator[](size_t index)
-{
-	return (*mArray)[index];
-}
-
-ObjectPtr ArrayPtr::operator[](const Char* key)
-{
-	return (*mArray)[key];
-}
-
-ObjectPtr ArrayPtr::get(size_t index)const
-{
-	return mArray->get(index);
-}
-
-ObjectPtr ArrayPtr::get(const Char* key)const
-{
-	return mArray->get(key);
-}
-
-void ArrayPtr::setNull()
-{
-	if (isNull()) return;
-	if (*mCount == 1)
-	{
-		TT_DELETE(Array, mArray);
-		TT_FREE(mCount);
-		mCount = nullptr;
-	}
-	else
-		--(*mCount);
-}
-
-bool ArrayPtr::isNull()const
-{
-	return (mCount == nullptr);
-}
-
-void ArrayPtr::operator = (const ArrayPtr& ap)
-{
-	setNull();
-	mArray = ap.mArray;
-	mCount = ap.mCount;
-	++(*mCount);
-}
-
-void ArrayPtr::copy(const ArrayPtr& ap)
-{
-	*mArray = *ap.mArray;
-}
+//ArrayPtr::ArrayPtr(bool bhash)
+//{
+//	mArray = TT_NEW(Array)(bhash);
+//	mCount = TT_NEW(size_t)(1);
+//}
+//
+//ArrayPtr::ArrayPtr(const ArrayPtr& ap)
+//{
+//	mArray = ap.mArray;
+//	mCount = ap.mCount;
+//	++(*mCount);
+//
+//}
+//
+//ArrayPtr::~ArrayPtr()
+//{
+//	setNull();
+//}
+//
+//ObjectPtr ArrayPtr::operator[](size_t index)
+//{
+//	return (*mArray)[index];
+//}
+//
+//ObjectPtr ArrayPtr::operator[](const Char* key)
+//{
+//	return (*mArray)[key];
+//}
+//
+//ObjectPtr ArrayPtr::get(size_t index)const
+//{
+//	return mArray->get(index);
+//}
+//
+//ObjectPtr ArrayPtr::get(const Char* key)const
+//{
+//	return mArray->get(key);
+//}
+//
+//void ArrayPtr::setNull()
+//{
+//	if (isNull()) return;
+//	if (*mCount == 1)
+//	{
+//		TT_DELETE(Array, mArray);
+//		TT_FREE(mCount);
+//		mCount = nullptr;
+//	}
+//	else
+//		--(*mCount);
+//}
+//
+//bool ArrayPtr::isNull()const
+//{
+//	return (mCount == nullptr);
+//}
+//
+//void ArrayPtr::operator = (const ArrayPtr& ap)
+//{
+//	setNull();
+//	mArray = ap.mArray;
+//	mCount = ap.mCount;
+//	++(*mCount);
+//}
+//
+//void ArrayPtr::copy(const ArrayPtr& ap)
+//{
+//	*mArray = *ap.mArray;
+//}

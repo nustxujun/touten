@@ -18,7 +18,7 @@ namespace TT
 		{
 			assert(sizeof...(Args) <= paracount);//脚本中的需要抛异常
 			Tuple t;
-			ArgsConverter<Tuple>::convert<sizeof...(Args)-1>(t, paras);
+			ArgsConverter<sizeof...(Args)>::Conv<Tuple>::convert<sizeof...(Args)-1>(t, paras);
 
 			Call::call<R, Args...>(this, t, ret);
 		}

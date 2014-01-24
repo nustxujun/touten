@@ -129,7 +129,7 @@ void StackBasedInterpreter::execute(const ConstantPool& constpool, const char* c
 		}
 		else
 		{
-			ArrayPtr* arr = TT_NEW(ArrayPtr)(false);
+			Array* arr = TT_NEW(Array)(false);
 			for (size_t i = 0; !os.empty(); ++i)
 			{
 				*(*arr)[i] = *os.back();
@@ -137,8 +137,8 @@ void StackBasedInterpreter::execute(const ConstantPool& constpool, const char* c
 			}
 
 			callstack.pop();
-			(*ret).type = OT_ARRAY;
-			(*ret).val.arr = arr;
+			(*ret).val->type = OT_ARRAY;
+			(*ret).val->arr = arr;
 		}
 	};
 
@@ -179,7 +179,7 @@ void StackBasedInterpreter::execute(const ConstantPool& constpool, const char* c
 	{
 		for (size_t i = 0; i < parasCount; ++i)
 		{
-			pushOprPtr(paras[i]);
+			pushOprPtr(paras[parasCount - i - 1]);
 		}
 	}
 
@@ -200,7 +200,7 @@ void StackBasedInterpreter::execute(const ConstantPool& constpool, const char* c
 				}
 				const Object& name = *getArg(0);
 				Caster::cast(*env, OT_ARRAY);
-				ObjectPtr obj = (*env->val.arr)[name.val.str.cont];
+				ObjectPtr obj = (*env->val->arr)[name.val->str.cont];
 				popOpr();
 				pushOprPtr(obj);
 			}
@@ -257,20 +257,20 @@ void StackBasedInterpreter::execute(const ConstantPool& constpool, const char* c
 			{
 				Operand count = getopr();
 				const Object& arr = *getArg(count);
-				if (arr.type == OT_ARRAY)
+				if (arr.val->type == OT_ARRAY)
 				{
 					for (size_t i = 0; i < count; ++i)
 					{
 						const Object& name = *getArg(0);
-						*(*localenv->val.arr)[name.val.str.cont] = 
-							*arr.val.arr->get(i);
+						*(*localenv->val->arr)[name.val->str.cont] = 
+							*arr.val->arr->get(i);
 						popOpr();
 					}					
 				}
 				else
 				{
 					const Object& name = *getArg(count - 1);
-					*(*localenv->val.arr)[name.val.str.cont] = arr;
+					*(*localenv->val->arr)[name.val->str.cont] = arr;
 					for (size_t i = 0; i < count; ++i)
 						popOpr();
 				}
@@ -288,10 +288,10 @@ void StackBasedInterpreter::execute(const ConstantPool& constpool, const char* c
 				Caster::cast(obj, OT_ARRAY);
 			
 				ObjectPtr elem ;
-				if (index.type == OT_STRING)
-					elem = (*obj.val.arr)[index.val.str.cont];
+				if (index.val->type == OT_STRING)
+					elem = (*obj.val->arr)[index.val->str.cont];
 				else
-					elem = (*obj.val.arr)[index.val.i];
+					elem = (*obj.val->arr)[index.val->i];
 
 				popOpr();
 				popOpr();
@@ -311,7 +311,7 @@ void StackBasedInterpreter::execute(const ConstantPool& constpool, const char* c
 				size_t opr = getopr();
 				size_t argsnum = FunctionValue::PARA_COUNT & opr;
 				size_t bret = FunctionValue::NEED_RETURN & opr;
-				if (func.type != OT_FUNCTION)
+				if (func.val->type != OT_FUNCTION)
 				{
 					popOpr();
 					if (bret)
@@ -319,17 +319,17 @@ void StackBasedInterpreter::execute(const ConstantPool& constpool, const char* c
 					break;
 				}
 
-				size_t paraCount = FunctionValue::PARA_COUNT & func.val.func.funcinfo;
+				size_t paraCount = FunctionValue::PARA_COUNT & func.val->func.funcinfo;
 
-				if (FunctionValue::IS_CPP_FUNC & func.val.func.funcinfo)//c++ function
+				if (FunctionValue::IS_CPP_FUNC & func.val->func.funcinfo)//c++ function
 				{
-					Functor* call = (Functor*)func.val.func.codeAddr;
+					Functor* call = (Functor*)func.val->func.codeAddr;
 					popOpr();
 
 					auto& os = callstack.top().vars;
 					size_t oprnum = os.size();
 					int realnum = (oprnum < argsnum) ? oprnum : argsnum;
-					auto i = &*(os.begin() + (oprnum - realnum));
+					auto i = &*(os.data() + (oprnum - realnum));
 
 					Object callret;
 					(*call)(i, realnum, &callret);
@@ -340,7 +340,7 @@ void StackBasedInterpreter::execute(const ConstantPool& constpool, const char* c
 				}
 				else
 				{
-					Codes* codeaddr = (Codes*)func.val.func.codeAddr;
+					Codes* codeaddr = (Codes*)func.val->func.codeAddr;
 					popOpr();
 
 					auto& os = callstack.top().vars;
@@ -432,8 +432,8 @@ void StackBasedInterpreter::execute(const ConstantPool& constpool, const char* c
 					break;
 				case MOD: case AND: case OR: case XOR:
 					{
-						o.type = OT_INTEGER;
-						INT_OPT(Caster::castToInt(o1), Caster::castToInt(o2), instr, o.val.i);
+						o.val->type = OT_INTEGER;
+						INT_OPT(Caster::castToInt(o1), Caster::castToInt(o2), instr, o.val->i);
 					}
 				}
 
@@ -461,7 +461,7 @@ void StackBasedInterpreter::boolOpt(const Object& o1, const Object& o2, Instruct
 	case DOR:	ret = Caster::castToInt(o1) || Caster::castToInt(o2); break;
 	}
 
-	o.type = ret ? OT_TRUE: OT_FALSE;
+	o.val->type = ret ? OT_TRUE: OT_FALSE;
 
 }
 
@@ -469,13 +469,13 @@ void StackBasedInterpreter::boolOpt(const Object& o1, const Object& o2, Instruct
 void StackBasedInterpreter::compareOpt(const Object& o1, const Object& o2, Instruction instr, Object& o)
 {
 	bool type[OT_NUM] = {0};
-	type[o1.type] = true;
-	type[o2.type] = true;
+	type[o1.val->type] = true;
+	type[o2.val->type] = true;
 
 	bool ret = false;
 
 	if (type[OT_NULL] || type[OT_FUNCTION] /*|| type[OT_FIELD]*/)
-		o.type = OT_NULL;
+		o.val->type = OT_NULL;
 	else if (type[OT_STRING])
 	{
 		
@@ -493,19 +493,19 @@ void StackBasedInterpreter::compareOpt(const Object& o1, const Object& o2, Instr
 		TT_EXCEPT(ET_UNKNOWN, EL_NORMAL,"type cannt compare", 0);
 	}
 
-	o.type = ret ? OT_TRUE: OT_FALSE;
+	o.val->type = ret ? OT_TRUE: OT_FALSE;
 }
 
 
 void StackBasedInterpreter::normalOpt(const Object& o1, const Object& o2, Instruction instr, Object& o)
 {
 	bool type[OT_NUM] = {0};
-	type[o1.type] = true;
-	type[o2.type] = true;
+	type[o1.val->type] = true;
+	type[o2.val->type] = true;
 
 	if (type[OT_NULL] || type[OT_FUNCTION] /*|| type[OT_FIELD]*/)
 	{
-		o.type = OT_NULL;
+		o.val->type = OT_NULL;
 	}
 	else if (type[OT_STRING])
 	{
@@ -513,13 +513,13 @@ void StackBasedInterpreter::normalOpt(const Object& o1, const Object& o2, Instru
 	}
 	else if (type[OT_DOUBLE])
 	{
-		o.type = OT_DOUBLE;
-		BASE_OPT(Caster::castToReal(o1), Caster::castToReal(o2), instr, o.val.d);
+		o.val->type = OT_DOUBLE;
+		BASE_OPT(Caster::castToReal(o1), Caster::castToReal(o2), instr, o.val->d);
 	}
 	else if (type[OT_INTEGER] || type[OT_TRUE] || type[OT_FALSE])
 	{
-		o.type = OT_INTEGER;
-		BASE_OPT(Caster::castToInt(o1), Caster::castToInt(o2), instr, o.val.i);
+		o.val->type = OT_INTEGER;
+		BASE_OPT(Caster::castToInt(o1), Caster::castToInt(o2), instr, o.val->i);
 	}
 	else
 	{

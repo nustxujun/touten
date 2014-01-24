@@ -66,29 +66,58 @@ namespace TT
 	};
 
 
-	class ArrayPtr;
-	union Value
+	class Array;
+	struct Value
 	{
-		int i;
-		double d;
+		ObjectType type;
+		union
+		{
+			int i;
+			double d;
 
-		StringValue str;
-		FunctionValue func;
+			StringValue str;
+			FunctionValue func;
 
-		ArrayPtr* arr;
+			Array* arr;
+		} ;
+	};
+
+
+	class ValuePtr
+	{
+	public:
+		ValuePtr(const ValuePtr& ap);
+		ValuePtr(ObjectType ot);
+		~ValuePtr();
+		void operator=(const ValuePtr& ap);
+
+		Value& operator*()const;
+		Value* operator->()const;
+
+		void releaseVal();
+		void copy(const ValuePtr& val);
+	private:
+		void setNull();
+		bool isNull()const;
+
+	private:
+		Value* mVal;
+		size_t* mCount;
 	};
 
 	struct Object
 	{
-		ObjectType type;
-		Value val;
+		//ObjectType type;
+		ValuePtr val;
 
 		Object();
 		Object(const Object& obj);
 		Object(bool v);
 		Object(int v);
 		Object(double v);
+		Object(const Char* str);
 		Object(const Char* str, size_t size);
+
 		Object(FunctionValue v);
 
 		~Object();
@@ -159,32 +188,32 @@ namespace TT
 		bool mHash;
 	};
 
-	class ArrayPtr
-	{
-	public :
-		ArrayPtr(const ArrayPtr& ap) ;
-		ArrayPtr(bool bhash);
-		~ArrayPtr();
+	//class ArrayPtr
+	//{
+	//public :
+	//	ArrayPtr(const ArrayPtr& ap) ;
+	//	ArrayPtr(bool bhash);
+	//	~ArrayPtr();
 
-		void operator=(const ArrayPtr& ap);
+	//	void operator=(const ArrayPtr& ap);
 
-		ObjectPtr operator[](size_t index);
-		ObjectPtr operator[](const Char* key);
+	//	ObjectPtr operator[](size_t index);
+	//	ObjectPtr operator[](const Char* key);
 
-		ObjectPtr get(size_t index)const;
-		ObjectPtr get(const Char* key)const;
+	//	ObjectPtr get(size_t index)const;
+	//	ObjectPtr get(const Char* key)const;
 
 
-		void copy(const ArrayPtr& ap);
+	//	void copy(const ArrayPtr& ap);
 
-	private:
-		void setNull();
-		bool isNull()const;
+	//private:
+	//	void setNull();
+	//	bool isNull()const;
 
-	private:
-		Array* mArray;
-		size_t* mCount;
-	};
+	//private:
+	//	Array* mArray;
+	//	size_t* mCount;
+	//};
 
 	class Functor
 	{

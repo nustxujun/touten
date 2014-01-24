@@ -27,7 +27,7 @@ namespace TT
 				TT_EXCEPT(ET_UNKNOWN, EL_NORMAL, "same function name", 0);
 				return;
 			}
-			mTT->registerFunction(name, f);
+			mTT->registerOrRetrieveFunction(name, f);
 		}
 
 		template<class O, class R, class ... Args>
@@ -43,9 +43,10 @@ namespace TT
 				return;
 
 			}
-			mTT->registerFunction(name, f);
+			mTT->registerOrRetrieveFunction(name, f);
 		}
 
+		void remove(const String& name);
 
 		template<class R, class...Args>
 		typename std::enable_if<!std::is_void<R>::value, R>::type call(const String& name, Args... args)
@@ -77,6 +78,8 @@ namespace TT
 			mTT->call(name);
 		}
 
+
+		Touten* getTouten();
 	private:
 		Touten* mTT;
 

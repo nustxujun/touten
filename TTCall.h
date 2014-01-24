@@ -6,23 +6,40 @@ namespace TT
 	template<size_t ArgsNum>
 	struct CallImpl;
 
-	template<class Tuple>
+	template<int ArgsNum>
 	struct ArgsConverter
 	{
-		template<int index>
-		static void convert(Tuple& t, const ObjectPtr* paras)
+		template< class Tuple>
+		struct Conv
 		{
-			typedef typename std::tuple_element<index, Tuple>::type elemType;
-			std::get<index>(t) = Caster::cast<elemType>(**(paras + index));
-			convert<index - 1>(t, paras);
-		}
+			template<int index>
+			static void convert(Tuple& t, const ObjectPtr* paras)
+			{
+				typedef typename std::tuple_element<index, Tuple>::type elemType;
+				std::get<index>(t) = Caster::cast<elemType>(**(paras + index));
+				convert<index - 1>(t, paras);
+			}
 
-		template<>
-		static void convert<0>(Tuple& t, const ObjectPtr* paras)
+			template<>
+			static void convert<0>(Tuple& t, const ObjectPtr* paras)
+			{
+				typedef typename std::tuple_element<0, Tuple>::type elemType;
+				std::get<0>(t) = Caster::cast<elemType>(**paras);
+			}
+		};
+	};
+
+	template<>
+	struct ArgsConverter<0>
+	{
+		template< class Tuple>
+		struct Conv
 		{
-			typedef typename std::tuple_element<0, Tuple>::type elemType;
-			std::get<0>(t) = Caster::cast<elemType>(**paras);
-		}
+			template<int index>
+			static void convert(Tuple& t, const ObjectPtr* paras)
+			{
+			}
+		};
 	};
 
 	struct Call

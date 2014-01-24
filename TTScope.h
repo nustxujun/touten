@@ -35,8 +35,8 @@ namespace TT
 
 	class ScopeManager
 	{
-		static const String anonymous_scope;
-		static const String global_scope;
+		static const Char* anonymous_scope;
+		static const Char* global_scope;
 	public :
 		ScopeManager();
 		~ScopeManager();

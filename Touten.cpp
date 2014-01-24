@@ -6,9 +6,15 @@
 #include "TTParser.h"
 #include <fstream>
 #include "TTStackBasedAssembler.h"
-
+#include "TTException.h"
 
 using namespace TT;
+
+Touten::Touten()
+{
+	initInternalFunction();
+}
+
 
 bool Touten::loadFile(const String& name)
 {
@@ -71,14 +77,70 @@ void Touten::registerFunction(const String& name, Functor* func)
 	sym->addrOffset =  mConstPool << fv;
 }
 
-void Touten::call(const String& name, size_t parasCount, const ObjectPtr* paras, Object* ret)
+void Touten::registerOrRetrieveFunction(const String& name, Functor* func)
+{
+	auto global = mScopemgr.getGlobal();
+	auto sym = global->getSymbol(name);
+	if (sym.sym != nullptr)
+	{
+		if (sym.sym->symtype != ST_CPP_FUNC)
+		{
+			TT_EXCEPT(ET_UNKNOWN, EL_NORMAL, "invalid symbol", 0);
+			return;
+		}
+
+		FunctionValue* fv = (FunctionValue*)mConstPool[sym.sym->addrOffset];
+		fv->codeAddr = func;
+		return;
+	}
+
+	registerFunction(name, func);
+}
+
+bool Touten::isValidFunction(const String& name)
+{
+	Symbol* sym = mScopemgr.getGlobal()->getSymbol(name).sym;
+	if (!sym) return false;
+
+	if (sym->symtype != ST_FUNCTION &&
+		sym->symtype != ST_CPP_FUNC)
+		return false;
+	return sym->actype == AT_GLOBAL;
+}
+
+
+bool Touten::call(const String& name, size_t parasCount, const ObjectPtr* paras, Object* ret)
 {
 	Scope::SymbolObj sym = mScopemgr.getGlobal()->getSymbol(name);
-	if (sym.sym == 0 || sym.sym->symtype != ST_FUNCTION) return ;
+	if (sym.sym == 0 || sym.sym->symtype != ST_FUNCTION) return false;
 
 	TT::FunctionValue* begin = (FunctionValue*)mConstPool[sym.sym->addrOffset];
 	mInterpreter.execute(mConstPool, ((Codes*)begin->codeAddr)->data(), 
 		std::min(begin->funcinfo & FunctionValue::PARA_COUNT , parasCount), paras, ret);
+	return true;
+}
+
+void Touten::initInternalFunction()
+{
+	static struct : public Functor
+	{
+		ScopeManager* sm;
+		ConstantPool* cp;
+		void operator()(const ObjectPtr* paras, int paracount, Object* ret)
+		{
+			if (paracount == 0 || (*paras)->val->type != OT_STRING) return;
+			String name = Caster::cast<String>(**paras);
+			Scope::SymbolObj sym = sm->getGlobal()->getSymbol(name);
+			if (!sym.sym || !(sym.sym->symtype == ST_FUNCTION || sym.sym->symtype == ST_CPP_FUNC)) return;
+
+			*ret = *(FunctionValue*)((*cp)[sym.sym->addrOffset]);
+
+		}
+	} getglobalfunciton;
+	getglobalfunciton.sm = &mScopemgr;
+	getglobalfunciton.cp = &mConstPool;
+	registerFunction(L"_GetGlobalFunction", &getglobalfunciton);
+
 
 }
 

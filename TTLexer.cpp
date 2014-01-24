@@ -183,7 +183,7 @@ void Lexer::skipLine(const Char*& read)
 bool Lexer::getVal(const Char*& read, Token& token)
 {
 	
-	if ( isChar(*read))
+	if ( isChar(*read) || *read == '_')
 	{
 		token.lineNum = mLineNum;
 		token.type = TT_NAME;

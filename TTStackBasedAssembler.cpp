@@ -71,7 +71,7 @@ void StackBasedAssembler::visit(VarNode* node)
 					case AT_GLOBAL: instr = LOAD_GLOBAL; break;
 					case AT_LOCAL:  instr = LOAD_LOCAL; break;
 					}
-					addInstruction(LOAD_STRING, stringToConstPool(mCurName.c_str()));
+					addInstruction(LOAD_STRING, mConstPool << mCurName);
 					addInstruction(instr);
 					
 			}
@@ -111,7 +111,7 @@ void StackBasedAssembler::visit(VarNode* node)
 			}
 
 			mCurSymbol = mCurScope->createSymbol(mCurName, ST_VARIABLE, node->type);
-			addInstruction(LOAD_STRING, stringToConstPool(mCurName.c_str()));
+			addInstruction(LOAD_STRING, mConstPool << mCurName);
 			//if (!mIsLeft)
 				addInstruction(instr);
 		}
@@ -224,7 +224,7 @@ void StackBasedAssembler::visit(FunctionNode* node)
 		{
 			mCurSymbol = mCurScope->createSymbol(mCurName, ST_VARIABLE, AT_LOCAL);
 			mCurSymbol->isdefine = true;
-			addInstruction(LOAD_STRING, stringToConstPool(mCurName.c_str()));
+			addInstruction(LOAD_STRING, mConstPool << mCurName);
 			addInstruction(LOAD_LOCAL);
 			addInstruction(STORE, IP_STORE_COPY);
 		}
@@ -312,7 +312,7 @@ void StackBasedAssembler::visit(ConstNode* node)
 
 				++i;
 			}
-			addInstruction(LOAD_STRING, stringToConstPool(str));
+			addInstruction(LOAD_STRING, mConstPool << str );
 		}
 		return;
 	}
@@ -434,20 +434,20 @@ void StackBasedAssembler::addbackfill(Symbol* s, size_t instr)
 	mBackFill[s].push_back(instr);
 }
 
-size_t StackBasedAssembler::stringToConstPool(const String& str)
-{
-	auto ret = mConstStringMap.find(str.c_str());
-	if (ret != mConstStringMap.end())
-		return ret->second;
-
-
-	size_t charcount = str.size() + 1;
-
-	size_t addr = mConstPool << charcount;
-	mConstPool.write(str.c_str(), sizeof(Char)* charcount);
-
-	mConstStringMap.insert(ConstStringMap::value_type((const Char*)mConstPool[addr + 4], addr));
-
-	return addr;
-}
+//size_t StackBasedAssembler::stringToConstPool(const String& str)
+//{
+//	auto ret = mConstStringMap.find(str.c_str());
+//	if (ret != mConstStringMap.end())
+//		return ret->second;
+//
+//
+//	size_t charcount = str.size() + 1;
+//
+//	size_t addr = mConstPool << charcount;
+//	mConstPool.write(str.c_str(), sizeof(Char)* charcount);
+//
+//	mConstStringMap.insert(ConstStringMap::value_type((const Char*)mConstPool[addr + 4], addr));
+//
+//	return addr;
+//}
 
