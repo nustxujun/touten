@@ -30,6 +30,7 @@ namespace TT
 		{
 			PARA_COUNT = 0xffff,
 
+			IS_VARIADIC = 0x20000000,
 			IS_CPP_FUNC = 0x40000000,
 			NEED_RETURN = 0x80000000,
 		};
@@ -111,6 +112,7 @@ namespace TT
 		ValuePtr val;
 
 		Object();
+		Object(ObjectType ot); 
 		Object(const Object& obj);
 		Object(bool v);
 		Object(int v);
@@ -132,7 +134,7 @@ namespace TT
 	{
 	public :
 		ObjectPtr();
-		//ObjectPtr(Object* obj = 0);
+		ObjectPtr(ObjectType ot);
 		ObjectPtr(const Object& obj);
 		ObjectPtr(const ObjectPtr& obj);
 
@@ -164,8 +166,8 @@ namespace TT
 		Array(bool hash, size_t cap = 8);
 		~Array();
 
-		ObjectPtr operator[](size_t index);
-		ObjectPtr operator[](const Char* key);
+		ObjectPtr& operator[](size_t index);
+		ObjectPtr& operator[](const Char* key);
 
 		ObjectPtr get(size_t index)const;
 		ObjectPtr get(const Char* key)const;

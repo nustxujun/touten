@@ -110,7 +110,6 @@
     <ClInclude Include="TTType.h" />
   </ItemGroup>
   <ItemGroup>
-    <ClCompile Include="main.cpp" />
     <ClCompile Include="stdafx.cpp" />
     <ClCompile Include="Touten.cpp" />
     <ClCompile Include="TTASTree.cpp" />
@@ -128,6 +127,9 @@
     <ClCompile Include="TTStackBasedInterpreter.cpp" />
     <ClCompile Include="TTSymbolMap.cpp" />
     <ClCompile Include="TTTools.cpp" />
+  </ItemGroup>
+  <ItemGroup>
+    <Text Include="bnf.txt" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">

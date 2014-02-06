@@ -111,6 +111,7 @@ ASTNode::Ptr Parser::parseFunction(ParserInput* input, AccessType at)
 	FunctionNode* fn = new FunctionNode();
 	ASTNode::Ptr f = fn;
 	fn->acctype = at;
+	fn->isVariadic = false;
 
 	t = input->next();
 	if (t.type == TT_NAME)
@@ -130,29 +131,69 @@ ASTNode::Ptr Parser::parseFunction(ParserInput* input, AccessType at)
 
 	if ( !checkDelimiter(input->lookahead(), ')'))
 	{
-		while (true)
+		bool terminate = false;
+		do
 		{
 			t = input->next();
-			if (t.type != TT_NAME)
+			switch (t.type)
 			{
-				TTPARSER_EXCEPT("syntax error", t.lineNum);
-				return 0;
+			case TT_NAME:
+				{
+					NameNode* nn = new NameNode;
+					nn->name = String(t.string, t.size);
+
+					last = last->setAndNext(nn);
+
+					t = input->lookahead();
+					if (!checkDelimiter(t, ',')) terminate = true;
+					t = input->next();
+				}
+				break;
+			case TT_ELLIPSIS:
+				{
+					fn->isVariadic = true;
+					terminate = true;
+					t = input->next();
+
+				}
+				break;
+			default:
+				{
+				   TTPARSER_EXCEPT("syntax error", t.lineNum);
+				   return 0;
+				}
+				break;
 			}
+		} while (!terminate);
 
-			NameNode* nn = new NameNode;
-			nn->name = String(t.string, t.size);
-
-			last = last->setAndNext(nn);
-
-			t = input->next();
-			if (!checkDelimiter(t, ','))
-			{
-				if (checkDelimiter(t, ')')) break;
-				
-				TTPARSER_EXCEPT("need , or )", t.lineNum);
-				return 0;
-			}
+		if (!checkDelimiter(t, ')'))
+		{
+			TTPARSER_EXCEPT("need , or )", t.lineNum);
+			return 0;
 		}
+		//while (true)
+		//{
+		//	t = input->next();
+		//	if (t.type != TT_NAME)
+		//	{
+		//		TTPARSER_EXCEPT("syntax error", t.lineNum);
+		//		return 0;
+		//	}
+
+		//	NameNode* nn = new NameNode;
+		//	nn->name = String(t.string, t.size);
+
+		//	last = last->setAndNext(nn);
+
+		//	t = input->next();
+		//	if (!checkDelimiter(t, ','))
+		//	{
+		//		if (checkDelimiter(t, ')')) break;
+		//		
+		//		TTPARSER_EXCEPT("need , or )", t.lineNum);
+		//		return 0;
+		//	}
+		//}
 	}
 	else
 		input->next();
@@ -684,6 +725,7 @@ ASTNode::Ptr Parser::parseFuncCall(ParserInput* input, bool needret,  ASTNode::P
 	ASTNode::Ptr f = fn;
 	fn->var = var;
 	fn->needrets = needret;
+	fn->hasVariadic = false;
 
 	if (checkDelimiter(input->lookahead(), ':'))
 	{
@@ -693,7 +735,7 @@ ASTNode::Ptr Parser::parseFuncCall(ParserInput* input, bool needret,  ASTNode::P
 
 	if (!checkDelimiter(input->next(), '('))
 	{
-		TTPARSER_EXCEPT(" need  )", input->lookahead().lineNum);
+		TTPARSER_EXCEPT(" need  (", input->lookahead().lineNum);
 		return 0;
 	}
 
@@ -702,24 +744,50 @@ ASTNode::Ptr Parser::parseFuncCall(ParserInput* input, bool needret,  ASTNode::P
 
 		ASTNodeList::Ptr last = new ASTNodeList();
 		fn->paras = last;
-
-		while (true)
+		Token t;
+		bool terminate = false;
+		do
 		{					
-			ASTNode::Ptr o = parseExpr(input);
-			if (!o.isNull()) 
-				last = last->setAndNext(o);
-			Token t = input->next();
-			if (!checkDelimiter(t, ','))
+			t = input->lookahead();
+			switch (t.type)
 			{
-				if (checkDelimiter(t, ')')) break;
+			case TT_ELLIPSIS:
+				{
+					input->next();
+					fn->hasVariadic = true;
+					
+					terminate = true;
+					t = input->next();
+				}
+				break;
+			default:
+				{
+					ASTNode::Ptr o = parseExpr(input);
+					if (!o.isNull())
+						last = last->setAndNext(o);
 
-				TTPARSER_EXCEPT(" need , or )", input->lookahead().lineNum);
-				return 0;
+					t = input->lookahead();
+					if (!checkDelimiter(t, ','))
+					{
+						terminate = true;
+					}
+					t = input->next();
+
+				}
+				break;
 			}
+
+		} while (!terminate);
+
+		if (!checkDelimiter(t, ')'))
+		{
+			TTPARSER_EXCEPT(" need , or )", input->lookahead().lineNum);
+			return 0;
 		}
 	}
 	else
 		input->next();
+
 	return f;
 }
 

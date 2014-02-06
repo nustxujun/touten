@@ -78,6 +78,7 @@ namespace TT
 		String name;
 		ASTNodeList::Ptr paras;
 		ASTNode::Ptr body;
+		bool isVariadic;
 	};
 
 	//class FieldNode: public ASTNode
@@ -122,6 +123,7 @@ namespace TT
 		ASTNode::Ptr func;
 		ASTNodeList::Ptr paras;
 		bool needrets;
+		bool hasVariadic;
 	};
 
 	class OperatorNode: public ASTNode

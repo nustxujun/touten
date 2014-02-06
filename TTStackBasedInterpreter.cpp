@@ -78,7 +78,7 @@ void CallStack::clear()
 {
 	CallFrame* tmp = mHead; 
 	size_t count = mLast - mHead;
-	for (int i = 0; i < count; ++i, ++tmp) 
+	for (size_t i = 0; i < count; ++i, ++tmp) 
 		tmp->~CallFrame(); 
 
 	mLast = mHead;
@@ -237,6 +237,19 @@ void StackBasedInterpreter::execute(const ConstantPool& constpool, const char* c
 		case LOAD_CPP_FUNC:
 			pushOpr(*(FunctionValue*)(constpool[getopr()]));
 			break;
+		//case LOAD_VARIADIC:
+		//	{
+		//		ObjectPtr arr = localenv->val->arr->get(L"__Variadic");
+		//		if (arr->val->type == OT_NULL) break;
+		//		for (int i = 0;; ++i)
+		//		{
+		//			ObjectPtr o = arr->val->arr->get(i);
+		//			if (o.isNull()) break;
+
+		//			pushOprPtr(o);
+		//		}
+		//	}
+		//	break;
 		case STORE:
 			{
 				Operand opr = getopr();
@@ -259,7 +272,7 @@ void StackBasedInterpreter::execute(const ConstantPool& constpool, const char* c
 				const Object& arr = *getArg(count);
 				if (arr.val->type == OT_ARRAY)
 				{
-					for (size_t i = 0; i < count; ++i)
+					for (int i = 0; i < count; ++i)
 					{
 						const Object& name = *getArg(0);
 						*(*localenv->val->arr)[name.val->str.cont] = 
@@ -271,7 +284,7 @@ void StackBasedInterpreter::execute(const ConstantPool& constpool, const char* c
 				{
 					const Object& name = *getArg(count - 1);
 					*(*localenv->val->arr)[name.val->str.cont] = arr;
-					for (size_t i = 0; i < count; ++i)
+					for (int i = 0; i < count; ++i)
 						popOpr();
 				}
 
@@ -311,6 +324,7 @@ void StackBasedInterpreter::execute(const ConstantPool& constpool, const char* c
 				size_t opr = getopr();
 				size_t argsnum = FunctionValue::PARA_COUNT & opr;
 				size_t bret = FunctionValue::NEED_RETURN & opr;
+				bool hasVariadic = (FunctionValue::IS_VARIADIC & opr) != 0; 
 				if (func.val->type != OT_FUNCTION)
 				{
 					popOpr();
@@ -320,6 +334,7 @@ void StackBasedInterpreter::execute(const ConstantPool& constpool, const char* c
 				}
 
 				size_t paraCount = FunctionValue::PARA_COUNT & func.val->func.funcinfo;
+				bool isVariadic = (FunctionValue::IS_VARIADIC & func.val->func.funcinfo) != 0;
 
 				if (FunctionValue::IS_CPP_FUNC & func.val->func.funcinfo)//c++ function
 				{
@@ -328,12 +343,12 @@ void StackBasedInterpreter::execute(const ConstantPool& constpool, const char* c
 
 					auto& os = callstack.top().vars;
 					size_t oprnum = os.size();
-					int realnum = (oprnum < argsnum) ? oprnum : argsnum;
+					int realnum = std::min(oprnum, argsnum);
 					auto i = &*(os.data() + (oprnum - realnum));
 
 					Object callret;
 					(*call)(i, realnum, &callret);
-					for (int i = 0; i < argsnum; ++i)
+					for (size_t i = 0; i < argsnum; ++i)
 						popOpr();
 					if (bret)
 						pushOpr(callret);
@@ -346,14 +361,94 @@ void StackBasedInterpreter::execute(const ConstantPool& constpool, const char* c
 					auto& os = callstack.top().vars;
 					CallFrame& frame = pushCallFrame(begin, current, bret != 0);
 					begin = current = codeaddr->data();
+					int diff = (int)argsnum - (int)paraCount;
+					if (diff == 0)
+					{
+						if (isVariadic && hasVariadic)
+						{
+							int variadicCount = 0;
+							Array* arr = os.back()->val->arr;
+							for (;; ++variadicCount)
+								if (arr->get(variadicCount).isNull()) break;
+							for (int i = 0; i < variadicCount; ++i)
+								pushOpr(*arr->get(i));
+
+							os.pop_back();
+						}
+					}
+					else if (diff < 0)
+					{
+						if (hasVariadic)
+						{ 
+							int variadicCount = 0;
+							Array* arr = os.back()->val->arr;
+							for (;; ++variadicCount)
+								if (arr->get(variadicCount).isNull()) break;
+
+							diff = variadicCount + diff;
+							if (diff <= 0 || isVariadic)
+							{
+								for (int i = 0; i < -diff; ++i)
+									pushOpr(Object());
+
+								for (int i = 0; i < variadicCount; ++i)
+									pushOpr(*arr->get(i));
+
+							}
+							else if (0 < diff)
+							{	
+								for (int i = 0; i < diff; ++i)
+									pushOpr(*arr->get(i));
+							}
+							os.pop_back();
+
+							paraCount = argsnum;
+						}
+		
+					}
+					else //if (0 < diff)
+					{ 
+						if (isVariadic)
+						{
+							if (hasVariadic)
+							{
+								ObjectPtr variadic = os.back();
+								Array* arr = os.back()->val->arr;
+								os.pop_back();
+								int variadicCount = 0;
+								for (;; ++variadicCount)
+									if (arr->get(variadicCount).isNull()) break;
+
+								for (int i = 0; i < variadicCount; ++i)
+									for (int i = 0; i < 0 ; --i)
+									pushOpr(*arr->get(i));
+
+							}
+
+							//paraCount = argsnum;
+						}
+					}
 
 					size_t maxcount = std::max(paraCount, argsnum);
 					size_t pc = maxcount - paraCount;
 					size_t an = maxcount - argsnum;
+					ObjectPtr variadic;
+					if (isVariadic)
+					{
+						variadic = ObjectPtr(OT_ARRAY);
+						variadic->val->arr = TT_NEW(Array)(false);
+						pushOprPtr(variadic);
+					}
 					for (size_t i = 0; i < maxcount; ++i)
 					{
 						if (i < pc)
+						{
+							if (isVariadic)
+							{
+								(*variadic->val->arr)[i] = os.back();
+							}
 							os.pop_back();
+						}
 						else if (i < an)
 							pushOpr(Object());
 						else
@@ -368,6 +463,7 @@ void StackBasedInterpreter::execute(const ConstantPool& constpool, const char* c
 					sharedenv = curenv;
 					curenv = 0;
 				}
+				
 
 			}
 			break;
@@ -377,7 +473,7 @@ void StackBasedInterpreter::execute(const ConstantPool& constpool, const char* c
 				begin = old.beginPos;
 				current = old.curPos;
 				bool bret = old.needret;
-				ObjectPtr ret;
+				ObjectPtr ret(OT_NULL);
 				popCallFrame(ret);
 				if (callstack.empty())
 				{

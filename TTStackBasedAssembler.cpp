@@ -112,13 +112,32 @@ void StackBasedAssembler::visit(VarNode* node)
 
 			mCurSymbol = mCurScope->createSymbol(mCurName, ST_VARIABLE, node->type);
 			addInstruction(LOAD_STRING, mConstPool << mCurName);
-			//if (!mIsLeft)
-				addInstruction(instr);
+			addInstruction(instr);
 		}
 		else
 		{
-			TTSBASSEMBLER_EXCPET("undefined symbol");
 			//考虑到在这里无法分清是哪层空间的符号，所以不予回填
+			switch (node->type)
+			{
+			case AT_SHARED:
+				{//成员变量情况
+					Instruction instr = LOAD_SHARED;
+					Scope::Ptr scope;
+					mCurSymbol = mCurScope->createSymbol(mCurName, ST_VARIABLE, node->type);
+					addInstruction(LOAD_STRING, mConstPool << mCurName);
+					addInstruction(instr);
+				}
+				break;
+			default:
+				{
+					//全局变量或者函数必然提前定义
+					//其他情况无法分辨是否是变量还是函数
+					TTSBASSEMBLER_EXCPET("undefined symbol");
+				}
+				break;
+			}
+
+			
 
 			//mCurSymbol = mScopeMgr.getGlobal()->createSymbol(mCurName,ST_FUNCTION, AT_GLOBAL);
 			//mCurSymbol->isdefine = false;
@@ -214,6 +233,8 @@ void StackBasedAssembler::visit(FunctionNode* node)
 	sym.sym->isdefine = true;
 
 	enterScope(node->name.c_str());
+
+
 	ASTNodeList::Ptr sub = node->paras;
 	size_t count = 0;
 	while (!sub.isNull() && !sub->obj.isNull())
@@ -237,8 +258,18 @@ void StackBasedAssembler::visit(FunctionNode* node)
 		++count;
 	}
 
+	//变参
+	if (node->isVariadic)
+	{
+		addInstruction(LOAD_STRING, mConstPool << L"__Variadic");
+		addInstruction(LOAD_LOCAL);
+		addInstruction(STORE, IP_STORE_COPY);
+	}
+
 	FunctionValue fv;
 	fv.funcinfo = count;
+	if (node->isVariadic)
+		fv.funcinfo |= FunctionValue::IS_VARIADIC;
 	fv.codeAddr = mCurScope->getCode();
 
 	sym.sym->addrOffset = mConstPool << fv;
@@ -320,8 +351,16 @@ void StackBasedAssembler::visit(ConstNode* node)
 
 void StackBasedAssembler::visit(FuncCallNode* node)
 {
+	/*注意参数和函数的入栈顺序，编码靠前的先入栈*/
+
 	//先推参数
+
 	size_t argsnum = visit(node->paras);
+	if (node->hasVariadic)
+	{
+		addInstruction(LOAD_STRING, mConstPool << L"__Variadic");
+		addInstruction(LOAD_LOCAL);
+	}
 
 	//再推符号
 
@@ -342,10 +381,12 @@ void StackBasedAssembler::visit(FuncCallNode* node)
 	case ST_VARIABLE:
 	case ST_FUNCTION:
 	case ST_CPP_FUNC:
-		{
-			//stack desc:[before] --> [after]
-			//paras funcname callinstr argsnum --> paras
-			addInstruction(CALL, argsnum | (node->needrets? FunctionValue::NEED_RETURN : 0));
+	{
+		//stack desc:[before] --> [after]
+		//paras funcname callinstr argsnum --> paras
+		addInstruction(CALL, argsnum |
+			(node->needrets ? FunctionValue::NEED_RETURN : 0) |
+			(node->hasVariadic ? FunctionValue::IS_VARIADIC: 0) );
 		}
 		break;
 	default:

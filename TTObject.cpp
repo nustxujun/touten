@@ -80,8 +80,8 @@ ValuePtr::ValuePtr(ObjectType ot)
 	mVal = (Value*)TT_MALLOC(sizeof(Value));
 	mCount = TT_NEW(size_t)(1);
 
+	memset(mVal, 0, sizeof(mVal));
 	mVal->type = ot;
-
 }
 
 ValuePtr::ValuePtr(const ValuePtr& ap)
@@ -133,7 +133,7 @@ void ValuePtr::releaseVal()
 		TT_FREE(mVal->str.cont);
 		break;
 	}
-
+	memset(mVal, 0, sizeof(mVal));
 	mVal->type = OT_NULL;
 
 }
@@ -180,7 +180,11 @@ Value* ValuePtr::operator->()const
 Object::Object() :
 	val(OT_NULL)
 {
+}
 
+Object::Object(ObjectType ot):
+	val(ot)
+{
 }
 
 Object::Object(const Object& obj):
@@ -294,7 +298,13 @@ void Object::reference(const Object& obj)
 
 ObjectPtr::ObjectPtr()
 {
-	mInst = TT_NEW(Object)();
+	mInst = nullptr;
+	mCount = nullptr;
+}
+
+ObjectPtr::ObjectPtr(ObjectType ot)
+{
+	mInst = TT_NEW(Object)(ot);
 	mCount = TT_NEW(size_t)(1);
 }
 
@@ -383,7 +393,7 @@ Array::~Array()
 	TT_FREE(mHead);
 }
 
-ObjectPtr Array::operator[](size_t index)
+ObjectPtr& Array::operator[](size_t index)
 {
 	if (!mHash)
 	{
@@ -402,7 +412,7 @@ ObjectPtr Array::operator[](size_t index)
 	return operator[](key.c_str());
 }
 
-ObjectPtr Array::operator[](const Char* key)
+ObjectPtr& Array::operator[](const Char* key)
 {
 	if (!mHash) convertToHashMap();
 
@@ -480,9 +490,13 @@ Array& Array::operator=(const Array& arr)
 	const Elem* bega = arr.mHead;
 	for (; begt < tmp.mTail; ++begt, ++bega)
 	{
-		if (!bega->key) continue;
+		//if (!bega->key) continue;
+		//Array被创建时 ，内存置了0，因此obj虽然不合法但是 isNull的返回一定正确
+		//因为如果不是hash表的情况下 key是 NULL
+		if (bega->obj.isNull()) continue;
 		begt->obj = bega->obj;
-		begt->key = Tools::cloneString(bega->key);
+		if (bega->key)
+			begt->key = Tools::cloneString(bega->key);
 		
 	}
 	swap(tmp);

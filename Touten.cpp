@@ -115,8 +115,12 @@ bool Touten::call(const String& name, size_t parasCount, const ObjectPtr* paras,
 	if (sym.sym == 0 || sym.sym->symtype != ST_FUNCTION) return false;
 
 	TT::FunctionValue* begin = (FunctionValue*)mConstPool[sym.sym->addrOffset];
+
+	if ( (begin->funcinfo & FunctionValue::IS_VARIADIC) == 0)
+		parasCount = std::min(begin->funcinfo & FunctionValue::PARA_COUNT, parasCount);
+
 	mInterpreter.execute(mConstPool, ((Codes*)begin->codeAddr)->data(), 
-		std::min(begin->funcinfo & FunctionValue::PARA_COUNT , parasCount), paras, ret);
+		parasCount, paras, ret);
 	return true;
 }
 
@@ -139,7 +143,7 @@ void Touten::initInternalFunction()
 	} getglobalfunciton;
 	getglobalfunciton.sm = &mScopemgr;
 	getglobalfunciton.cp = &mConstPool;
-	registerFunction(L"_GetGlobalFunction", &getglobalfunciton);
+	registerFunction(L"__GetGlobalFunction", &getglobalfunciton);
 
 
 }

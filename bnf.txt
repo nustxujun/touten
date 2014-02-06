@@ -21,14 +21,14 @@ return ::= 'return' exp{',' exp}
 funcbody ::= [ '(' parlist ')'] '{' block'}'
 
 
-parlist ::= var { ',' var}
+parlist ::= var { ',' var} ['...'] //... 不定参数符号,目前只支持函数参数传递时使用，以后如果做变量使用，需要修改解析结构
 
 
-funcall ::=  var [':' var ] ( '(' [args] ')'   ///':'的方式快速函数调用
+funcall ::=  var ( '(' [args] ')'   
 
+variadic = '...'
 
-args ::= exp{',' exp}
-
+args ::= exp{',' exp} [ ',' variadic]
 
 assgin ::= var ['&']'=' exp |
 
@@ -48,10 +48,8 @@ exp ::= constance |
 
 		exp binop exp | unop exp |  
 
-		'(' exp ')'
+		'(' exp ')' 
 
-
-		
 loop ::= while '(' exp ')' '{' block '}' |
 
 	 do '{' block '}' while '(' exp ')'

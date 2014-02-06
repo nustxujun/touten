@@ -46,6 +46,18 @@ namespace TT
 			mTT->registerOrRetrieveFunction(name, f);
 		}
 
+		template<class O, class R, class ... Args>
+		void bind(const String& name, O* inst, R(O::*func)(Args...)const)
+		{
+			bind(name, inst, (R(T::*)(Args...))func)
+		}
+
+		template<class O, class R, class ... Args>
+		void bind(const String& name, O* inst, R(O::*func)(Args...)volatile)
+		{
+			bind(name, inst, (R(T::*)(Args...))func)
+		}
+
 		void remove(const String& name);
 
 		template<class R, class...Args>

@@ -62,12 +62,26 @@ void Lexer::parse(const Char*& read, Token& t)
 				skipLine(read);
 			}
 			break;
-		case '~':case '%':case '^':	case '*':case '-':	case '+':case '.':
+		case '~':case '%':case '^':	case '*':case '-':	case '+':
 			{
 				t.type = TT_OPERATOR;
 				t.string = read++;
 				t.size = 1;
 				t.lineNum = mLineNum;
+			}
+			return;
+		case '.':
+			{
+				t.type = TT_OPERATOR;
+				t.string = read++;
+				t.size = 1;
+				t.lineNum = mLineNum;
+				if (*read == '.' && *(read + 1) == '.')
+				{
+					read += 2;
+					t.size = 3;
+					t.type = TT_ELLIPSIS;
+				}
 			}
 			return;
 		case '{':case '}':case '[':	case ']':case ';':case ',':case '(':case ')':case ':':

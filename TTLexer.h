@@ -22,6 +22,8 @@ namespace TT
 		TT_PRE_SA,
 		TT_PRE_GL,
 
+		TT_ELLIPSIS,
+
 		TT_RESERVED_BEG,//注意这里的顺序不能随便修改
 		TT_GLOBAL = TT_RESERVED_BEG,
 		TT_LOCAL,

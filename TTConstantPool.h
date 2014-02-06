@@ -38,8 +38,7 @@ namespace TT
 			return addr;
 		}
 
-		template<>
-		size_t operator<<(const Char*const& strval)
+		size_t operator<<(const Char* strval)
 		{
 			String str = strval;
 			auto ret = mConstStringMap.find(strval);
