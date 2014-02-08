@@ -344,14 +344,14 @@ void StackBasedInterpreter::execute(const ConstantPool& constpool, const char* c
 					auto& os = callstack.top().vars;
 					size_t oprnum = os.size();
 					int realnum = std::min(oprnum, argsnum);
-					auto i = &*(os.data() + (oprnum - realnum));
+					auto args = &*(os.data() + (oprnum - realnum));
 
-					Object callret;
-					(*call)(i, realnum, &callret);
+					Object ret;
+					(*call)(args, realnum, &ret);
 					for (size_t i = 0; i < argsnum; ++i)
 						popOpr();
 					if (bret)
-						pushOpr(callret);
+						pushOpr(ret);
 				}
 				else
 				{
@@ -406,27 +406,19 @@ void StackBasedInterpreter::execute(const ConstantPool& constpool, const char* c
 						}
 		
 					}
-					else //if (0 < diff)
+					else if (isVariadic && hasVariadic)
 					{ 
-						if (isVariadic)
-						{
-							if (hasVariadic)
-							{
-								ObjectPtr variadic = os.back();
-								Array* arr = os.back()->val->arr;
-								os.pop_back();
-								int variadicCount = 0;
-								for (;; ++variadicCount)
-									if (arr->get(variadicCount).isNull()) break;
+						ObjectPtr variadic = os.back();
+						Array* arr = os.back()->val->arr;
+						os.pop_back();
+						int variadicCount = 0;
+						for (;; ++variadicCount)
+						if (arr->get(variadicCount).isNull()) break;
 
-								for (int i = 0; i < variadicCount; ++i)
-									for (int i = 0; i < 0 ; --i)
-									pushOpr(*arr->get(i));
+						for (int i = 0; i < variadicCount; ++i)
+						for (int i = 0; i < 0; --i)
+							pushOpr(*arr->get(i));
 
-							}
-
-							//paraCount = argsnum;
-						}
 					}
 
 					size_t maxcount = std::max(paraCount, argsnum);
@@ -574,7 +566,7 @@ void StackBasedInterpreter::compareOpt(const Object& o1, const Object& o2, Instr
 		o.val->type = OT_NULL;
 	else if (type[OT_STRING])
 	{
-		
+		CMP_OPT(Caster::castToString(o1), Caster::castToString(o2), instr, ret);
 	}
 	else if (type[OT_DOUBLE])
 	{

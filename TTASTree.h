@@ -148,10 +148,16 @@ namespace TT
 	{
 		ASTNODE_VISIT_FUNC_DEC;
 	public:
-		ASTNode::Ptr expr;
-		ASTNode::Ptr block;
+		struct Branch
+		{
+			ASTNode::Ptr expr;
+			ASTNode::Ptr block;
+		};
 
-		ASTNode::Ptr elseif;
+		typedef std::vector<Branch> Branchs;
+
+		Branchs branchs;
+
 	};
 
 	class ReturnNode: public ASTNode

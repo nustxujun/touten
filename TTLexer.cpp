@@ -383,7 +383,7 @@ bool Lexer::getString(const Char*& read, Token& token)
 		{
 			switch (*read)
 			{
-			case '"':
+				case '"':case '\'':
 			//case '\'':
 				{
 					if (dob != *read)

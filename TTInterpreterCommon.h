@@ -60,7 +60,6 @@ namespace TT
 		NS,
 
 		HALT,
-		VOID
 	};
 
 	enum InstructionParameter

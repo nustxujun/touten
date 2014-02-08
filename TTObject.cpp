@@ -86,6 +86,7 @@ ValuePtr::ValuePtr(ObjectType ot)
 
 ValuePtr::ValuePtr(const ValuePtr& ap)
 {
+	assert(*(((const int*)ap.mVal) - 1) > 0);
 	mVal = ap.mVal;
 	mCount = ap.mCount;
 	++(*mCount);

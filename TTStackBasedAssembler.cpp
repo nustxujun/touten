@@ -64,7 +64,7 @@ void StackBasedAssembler::visit(VarNode* node)
 		{
 		case ST_VARIABLE:
 			{
-					Instruction instr ;
+					Instruction instr = LOAD_LOCAL;
 					switch (node->type)
 					{
 					case AT_SHARED: instr = LOAD_SHARED; break;
@@ -205,9 +205,9 @@ void StackBasedAssembler::visit(FunctionNode* node)
 		if (anonymous)
 		{
 			static int index = 1;
-			const String anonymous = L"__anonymous_function";
+			const String anonymousname = L"__anonymous_function";
 			sym.sym = mCurScope->createSymbol(
-				anonymous + Tools::toString(index++), ST_FUNCTION, AT_GLOBAL);
+				anonymousname + Tools::toString(index++), ST_FUNCTION, AT_GLOBAL);
 		}
 		else
 		{
@@ -240,8 +240,8 @@ void StackBasedAssembler::visit(FunctionNode* node)
 	while (!sub.isNull() && !sub->obj.isNull())
 	{
 		sub->obj->visit(this);
-		auto sym = mCurScope->getSymbol(mCurName);
-		if (sym.sym == 0 || !sym.local)
+		auto parasym = mCurScope->getSymbol(mCurName);
+		if (parasym.sym == 0 || !parasym.local)
 		{
 			mCurSymbol = mCurScope->createSymbol(mCurName, ST_VARIABLE, AT_LOCAL);
 			mCurSymbol->isdefine = true;
@@ -419,6 +419,33 @@ void StackBasedAssembler::visit(LoopNode* node)
 
 void StackBasedAssembler::visit(CondIFNode* node)
 {
+	{
+		auto i = node->branchs.begin();
+		auto endi = node->branchs.end();
+
+		size_t jmp = -1;
+		//注意！code是由vector构成，其data()地址随时会变
+		auto code = mCurScope->getCode();
+		for (; i != endi; ++i)
+		{
+			if (jmp != -1)
+			{
+				*(int*)(code->data() + jmp) = (Operand)mCurScope->getOffset();
+				jmp = -1;
+			}
+			if (!i->expr.isNull())
+			{
+				i->expr->visit(this);
+				jmp = addInstruction(JZ, 0);
+			}
+			i->block->visit(this);
+		}
+
+		if (jmp != -1)
+			*(int*)(code->data() + jmp) = (Operand)mCurScope->getOffset();
+	}
+
+
 }
 
 void StackBasedAssembler::visit(ReturnNode* node)

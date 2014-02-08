@@ -352,7 +352,7 @@ ASTNode::Ptr Parser::parseVar(ParserInput* input, AccessType deftype)
 		else if (checkOperator(t, '.'))
 		{
 			input->next();
-			Token t = input->next();
+			t = input->next();
 			if (t.type != TT_NAME)
 			{
 				TTPARSER_EXCEPT("syntax error", t.lineNum);
@@ -651,70 +651,82 @@ ASTNode::Ptr Parser::parseLoop(ParserInput* input)
 
 ASTNode::Ptr Parser::parseCond(ParserInput* input)
 {
-	Token h = input->next();
-	Token t = h;
 
-	if (t.type == TT_IF || t.type == TT_ELSEIF || t.type == TT_ELSE)
+	CondIFNode* cin = new CondIFNode();
+	ASTNode::Ptr ci = cin;
+	Token t = input->lookahead();
+	if (t.type != TT_IF && t.type != TT_SWITCH)
 	{
-		CondIFNode* cin = new CondIFNode();
-		ASTNode::Ptr ci = cin;
+		TTPARSER_EXCEPT("need if or switch", input->lookahead().lineNum);
+		return 0;
+	}
 
-		if (h.type != TT_ELSE)
-		{//condition
-			if (!checkDelimiter(input->next(), '('))
+	while (true)
+	{
+		CondIFNode::Branch	bnc;
+		Token t = input->next();
+		Token head = t;
+
+		if (t.type == TT_IF || t.type == TT_ELSEIF)
+		{
+			t = input->next();
+
+			if (!checkDelimiter(t, '('))
 			{
-				TTPARSER_EXCEPT("need (", input->lookahead().lineNum);
-				return 0;		
+				TTPARSER_EXCEPT("need (", t.lineNum);
+				return 0;
 			}
 
-			cin->expr = parseExpr(input);
-
-			if (cin->expr.isNull() ) 
+			bnc.expr = parseExpr(input);
+			if (bnc.expr.isNull())
 			{
 				TTPARSER_EXCEPT("parse expr failed, need expr", input->lookahead().lineNum);
 				return 0;
 			}
 
-			if (!checkDelimiter(input->next(), ')'))
+			t = input->next();
+			if (!checkDelimiter(t, ')'))
 			{
-				TTPARSER_EXCEPT("need )", input->lookahead().lineNum);
+				TTPARSER_EXCEPT("need )", t.lineNum);
 				return 0;
 			}
 		}
+		else if (t.type == TT_ELSE);//skip
+		else break;
+
+		
+
 
 		if (checkDelimiter(input->lookahead(), '{'))
 		{
 			input->next();
-			cin->block = parseBlock(input);
-			if (!checkDelimiter(input->next(), '}'))
+			bnc.block = parseBlock(input);
+			t = input->next();
+			if (!checkDelimiter(t, '}'))
 			{
-				TTPARSER_EXCEPT("need }", input->lookahead().lineNum);
+				TTPARSER_EXCEPT("need }", t.lineNum);
 				return 0;
 			}
 		}
-		else {cin->block = parseExpr(input); }
+		else { bnc.block = parseExpr(input); }
+
+		cin->branchs.push_back(bnc);
 
 		t = input->lookahead();
+		if (t.type != TT_ELSE && t.type != TT_ELSEIF)
+			break;
 
-		if (h.type != TT_ELSE)
-		{
-			switch (t.type)
-			{
-			case TT_ELSEIF:
-			case TT_ELSE:
-				cin->elseif = parseCond(input);			
-				break;
-			}
-		}
+		if (head.type == TT_ELSE)
+			break;
 
+	}
+
+	if (cin->branchs.size() != 0)
 		return ci;
+	else
+		return 0;
 
-	}
-	else if (t.type == TT_SWITCH)
-	{
-		TTPARSER_EXCEPT("switch is not supported",t.lineNum);
-	}
-	return 0;
+
 }
 
 ASTNode::Ptr Parser::parseFuncCall(ParserInput* input, bool needret,  ASTNode::Ptr pre)
