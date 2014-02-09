@@ -2,6 +2,7 @@
 #define _TTFunction_H_
 
 #include "TTCall.h"
+#include "TTFunctor.h"
 
 namespace TT
 {

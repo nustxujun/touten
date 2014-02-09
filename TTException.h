@@ -18,7 +18,7 @@ namespace TT
 		EL_NORMAL,
 	};
 
-	class Exception
+	class ToutenExport Exception
 	{
 	public:
 		Exception(ExceptionLevel lv, const std::string& de,  int l);
@@ -31,7 +31,7 @@ namespace TT
 		std::string desc;
 	};
 
-#define TT_DECL_EXCEPT(ExpName) class ExpName: public Exception{public : ExpName(ExceptionLevel lv, const std::string& desc, int l ):Exception(lv,desc,l){};};
+#define TT_DECL_EXCEPT(ExpName) class ToutenExport ExpName: public Exception{public : ExpName(ExceptionLevel lv, const std::string& desc, int l ):Exception(lv,desc,l){};};
 
 	TT_DECL_EXCEPT(LexerException);
 	TT_DECL_EXCEPT(ParserException);

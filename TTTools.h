@@ -6,7 +6,7 @@
 
 namespace TT
 {
-	class Tools
+	class ToutenExport Tools
 	{
 	public :
 		template<class T>

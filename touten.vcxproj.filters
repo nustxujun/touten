@@ -51,9 +51,6 @@
     <ClInclude Include="TTSymbolMap.h">
       <Filter>头文件</Filter>
     </ClInclude>
-    <ClInclude Include="TTAssembler.h">
-      <Filter>头文件</Filter>
-    </ClInclude>
     <ClInclude Include="TTType.h">
       <Filter>头文件</Filter>
     </ClInclude>
@@ -91,6 +88,12 @@
       <Filter>ex</Filter>
     </ClInclude>
     <ClInclude Include="TTException.h">
+      <Filter>头文件</Filter>
+    </ClInclude>
+    <ClInclude Include="TTPlatform.h">
+      <Filter>头文件</Filter>
+    </ClInclude>
+    <ClInclude Include="TTFunctor.h">
       <Filter>头文件</Filter>
     </ClInclude>
   </ItemGroup>

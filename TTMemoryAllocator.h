@@ -1,9 +1,11 @@
 #ifndef _TTMemoryAllocator_H_
 #define _TTMemoryAllocator_H_
 
+#include "TTPlatform.h"
+
 namespace TT
 {
-	class MemoryAllocator
+	class ToutenExport MemoryAllocator
 	{
 	public:
 		//optr : 原内存	nsize : 新大小

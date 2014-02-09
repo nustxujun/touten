@@ -17,7 +17,7 @@
   </PropertyGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.Default.props" />
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'" Label="Configuration">
-    <ConfigurationType>StaticLibrary</ConfigurationType>
+    <ConfigurationType>DynamicLibrary</ConfigurationType>
     <UseDebugLibraries>true</UseDebugLibraries>
     <CharacterSet>Unicode</CharacterSet>
     <PlatformToolset>v120</PlatformToolset>
@@ -47,11 +47,10 @@
   </PropertyGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
     <ClCompile>
-      <PrecompiledHeader>
-      </PrecompiledHeader>
+      <PrecompiledHeader>NotUsing</PrecompiledHeader>
       <WarningLevel>Level3</WarningLevel>
       <Optimization>Disabled</Optimization>
-      <PreprocessorDefinitions>WIN32;_DEBUG;_CONSOLE;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <PreprocessorDefinitions>WIN32;_DEBUG;_CONSOLE;TOUTEN_NONCLIENT_BUILD;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <BrowseInformation>true</BrowseInformation>
     </ClCompile>
     <Link>
@@ -66,12 +65,11 @@
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
     <ClCompile>
       <WarningLevel>Level3</WarningLevel>
-      <PrecompiledHeader>
-      </PrecompiledHeader>
+      <PrecompiledHeader>NotUsing</PrecompiledHeader>
       <Optimization>Full</Optimization>
       <FunctionLevelLinking>true</FunctionLevelLinking>
       <IntrinsicFunctions>true</IntrinsicFunctions>
-      <PreprocessorDefinitions>WIN32;NDEBUG;_CONSOLE;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <PreprocessorDefinitions>WIN32;NDEBUG;_CONSOLE;TOUTEN_NONCLIENT_BUILD;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <FavorSizeOrSpeed>Speed</FavorSizeOrSpeed>
     </ClCompile>
     <Link>
@@ -88,7 +86,6 @@
     <ClInclude Include="targetver.h" />
     <ClInclude Include="Touten.h" />
     <ClInclude Include="ToutenCommon.h" />
-    <ClInclude Include="TTAssembler.h" />
     <ClInclude Include="TTASTNode.h" />
     <ClInclude Include="TTASTree.h" />
     <ClInclude Include="TTBind.h" />
@@ -97,11 +94,13 @@
     <ClInclude Include="TTConstantPool.h" />
     <ClInclude Include="TTException.h" />
     <ClInclude Include="TTFunction.h" />
+    <ClInclude Include="TTFunctor.h" />
     <ClInclude Include="TTInterpreterCommon.h" />
     <ClInclude Include="TTLexer.h" />
     <ClInclude Include="TTMemoryAllocator.h" />
     <ClInclude Include="TTObject.h" />
     <ClInclude Include="TTParser.h" />
+    <ClInclude Include="TTPlatform.h" />
     <ClInclude Include="TTScope.h" />
     <ClInclude Include="TTStackBasedAssembler.h" />
     <ClInclude Include="TTStackBasedInterpreter.h" />

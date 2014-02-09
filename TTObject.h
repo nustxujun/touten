@@ -45,7 +45,7 @@ namespace TT
 		Char* cont;
 	};
 
-	class TTString
+	class ToutenExport TTString
 	{
 	public :
 		TTString(size_t count);
@@ -84,7 +84,7 @@ namespace TT
 	};
 
 
-	class ValuePtr
+	class ToutenExport ValuePtr
 	{
 	public:
 		ValuePtr(const ValuePtr& ap);
@@ -106,8 +106,9 @@ namespace TT
 		size_t* mCount;
 	};
 
-	struct Object
+	class ToutenExport Object
 	{
+	public:
 		//ObjectType type;
 		ValuePtr val;
 
@@ -130,7 +131,7 @@ namespace TT
 		void swap(Object& obj);
 	};
 
-	class ObjectPtr
+	class ToutenExport ObjectPtr
 	{
 	public :
 		ObjectPtr();
@@ -153,7 +154,7 @@ namespace TT
 		size_t* mCount;
 	};
 
-	class Array
+	class ToutenExport Array
 	{
 		static const size_t ArrayLimit = 0xff;
 		static const size_t IntkeyLength = 0xff;
@@ -188,39 +189,6 @@ namespace TT
 		Elem* mTail;
 		Elem* mLast;
 		bool mHash;
-	};
-
-	//class ArrayPtr
-	//{
-	//public :
-	//	ArrayPtr(const ArrayPtr& ap) ;
-	//	ArrayPtr(bool bhash);
-	//	~ArrayPtr();
-
-	//	void operator=(const ArrayPtr& ap);
-
-	//	ObjectPtr operator[](size_t index);
-	//	ObjectPtr operator[](const Char* key);
-
-	//	ObjectPtr get(size_t index)const;
-	//	ObjectPtr get(const Char* key)const;
-
-
-	//	void copy(const ArrayPtr& ap);
-
-	//private:
-	//	void setNull();
-	//	bool isNull()const;
-
-	//private:
-	//	Array* mArray;
-	//	size_t* mCount;
-	//};
-
-	class Functor
-	{
-	public :
-		virtual void operator()(const ObjectPtr* paras, int paracount, Object* ret) = 0;
 	};
 
 }

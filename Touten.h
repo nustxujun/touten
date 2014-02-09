@@ -3,15 +3,16 @@
 
 #include "ToutenCommon.h"
 
-#include "TTScope.h"
-#include "TTStackBasedInterpreter.h"
+
 
 namespace TT
 {
-	class Touten
+	class ToutenExport Touten
 	{
 	public :
 		Touten();
+		~Touten();
+
 		bool loadFile(const String& name);
 		bool call(const String& name, size_t parasCount = 0, const ObjectPtr* paras = nullptr, Object* ret = nullptr);
 		
@@ -24,9 +25,9 @@ namespace TT
 		void initInternalFunction();
 
 	private:
-		ScopeManager mScopemgr;
-		StackBasedInterpreter mInterpreter;
-		ConstantPool mConstPool;
+		ScopeManager* mScopemgr;
+		StackBasedInterpreter* mInterpreter;
+		ConstantPool* mConstPool;
 	};
 }
 

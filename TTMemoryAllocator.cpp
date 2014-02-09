@@ -11,7 +11,7 @@ void MemoryAllocator::setupMethod(AllocMethod method)
 
 void* MemoryAllocator::alloc(size_t size)
 {
-	return allocMethod( 0, size);
+	return realloc( 0, size);
 }
 
 void* MemoryAllocator::realloc(void* ptr, size_t nsize)
@@ -21,7 +21,7 @@ void* MemoryAllocator::realloc(void* ptr, size_t nsize)
 
 void MemoryAllocator::free(void* ptr)
 {
-	allocMethod(ptr, 0);
+	realloc(ptr, 0);
 }
 
 void* MemoryAllocator::defaultAlloc(void* ptr, size_t size)

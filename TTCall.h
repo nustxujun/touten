@@ -1,6 +1,8 @@
 #ifndef _TTCall_H_
 #define _TTCall_H_
 
+#include "TTCaster.h"
+
 namespace TT
 {
 	template<size_t ArgsNum>

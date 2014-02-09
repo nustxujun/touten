@@ -18,6 +18,19 @@ namespace TT
 	
 #define TTMap ::std::hash_map
 	
+
+	class ConstantPool;
+
+	class Functor;
+
+	class Object;
+	class ObjectPtr;
+
+	class ScopeManager;
+	class StackBasedInterpreter;
+	class Symbol;
 }
+
+#include "TTPlatform.h"
 
 #endif

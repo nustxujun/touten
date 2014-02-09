@@ -7,7 +7,7 @@
 namespace TT
 {
 
-	class Caster
+	class ToutenExport Caster
 	{
 	public:
 		static void cast(Object& o, ObjectType otype);

@@ -4,11 +4,12 @@
 #include "Touten.h"
 #include "TTFunction.h"
 #include "TTException.h"
+#include "TTObject.h"
 
 namespace TT
 {
 	
-	class Bind
+	class ToutenExport Bind
 	{
 	public:
 		Bind(Touten* tt);

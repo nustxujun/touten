@@ -7,12 +7,26 @@
 #include <fstream>
 #include "TTStackBasedAssembler.h"
 #include "TTException.h"
+#include "TTScope.h"
+#include "TTStackBasedInterpreter.h"
+#include "TTFunctor.h"
 
 using namespace TT;
 
 Touten::Touten()
 {
+	mScopemgr = new ScopeManager();
+	mInterpreter = new StackBasedInterpreter();
+	mConstPool = new ConstantPool();
+
 	initInternalFunction();
+}
+
+Touten::~Touten()
+{
+	delete mConstPool;
+	delete mInterpreter;
+	delete mScopemgr;
 }
 
 
@@ -59,7 +73,7 @@ bool Touten::loadFile(const String& name)
 	ast = parser.parse(&i);
 
 
-	StackBasedAssembler assembler( mScopemgr, mConstPool);
+	StackBasedAssembler assembler( *mScopemgr, (*mConstPool));
 
 	assembler.assemble(ast);
 
@@ -70,16 +84,16 @@ bool Touten::loadFile(const String& name)
 
 void Touten::registerFunction(const String& name, Functor* func)
 {
-	Symbol* sym = mScopemgr.getGlobal()->createSymbol(name, ST_CPP_FUNC, AT_GLOBAL);
+	Symbol* sym = mScopemgr->getGlobal()->createSymbol(name, ST_CPP_FUNC, AT_GLOBAL);
 	FunctionValue fv;
 	fv.codeAddr = func;
 	fv.funcinfo = FunctionValue::IS_CPP_FUNC;
-	sym->addrOffset =  mConstPool << fv;
+	sym->addrOffset =  (*mConstPool) << fv;
 }
 
 void Touten::registerOrRetrieveFunction(const String& name, Functor* func)
 {
-	auto global = mScopemgr.getGlobal();
+	auto global = mScopemgr->getGlobal();
 	auto sym = global->getSymbol(name);
 	if (sym.sym != nullptr)
 	{
@@ -89,7 +103,7 @@ void Touten::registerOrRetrieveFunction(const String& name, Functor* func)
 			return;
 		}
 
-		FunctionValue* fv = (FunctionValue*)mConstPool[sym.sym->addrOffset];
+		FunctionValue* fv = (FunctionValue*)(*mConstPool)[sym.sym->addrOffset];
 		fv->codeAddr = func;
 		return;
 	}
@@ -99,7 +113,7 @@ void Touten::registerOrRetrieveFunction(const String& name, Functor* func)
 
 bool Touten::isValidFunction(const String& name)
 {
-	Symbol* sym = mScopemgr.getGlobal()->getSymbol(name).sym;
+	Symbol* sym = mScopemgr->getGlobal()->getSymbol(name).sym;
 	if (!sym) return false;
 
 	if (sym->symtype != ST_FUNCTION &&
@@ -111,15 +125,15 @@ bool Touten::isValidFunction(const String& name)
 
 bool Touten::call(const String& name, size_t parasCount, const ObjectPtr* paras, Object* ret)
 {
-	Scope::SymbolObj sym = mScopemgr.getGlobal()->getSymbol(name);
+	Scope::SymbolObj sym = mScopemgr->getGlobal()->getSymbol(name);
 	if (sym.sym == 0 || sym.sym->symtype != ST_FUNCTION) return false;
 
-	TT::FunctionValue* begin = (FunctionValue*)mConstPool[sym.sym->addrOffset];
+	TT::FunctionValue* begin = (FunctionValue*)(*mConstPool)[sym.sym->addrOffset];
 
 	if ( (begin->funcinfo & FunctionValue::IS_VARIADIC) == 0)
 		parasCount = std::min(begin->funcinfo & FunctionValue::PARA_COUNT, parasCount);
 
-	mInterpreter.execute(mConstPool, ((Codes*)begin->codeAddr)->data(), 
+	mInterpreter->execute((*mConstPool), ((Codes*)begin->codeAddr)->data(), 
 		parasCount, paras, ret);
 	return true;
 }
@@ -141,8 +155,8 @@ void Touten::initInternalFunction()
 
 		}
 	} getglobalfunciton;
-	getglobalfunciton.sm = &mScopemgr;
-	getglobalfunciton.cp = &mConstPool;
+	getglobalfunciton.sm = mScopemgr;
+	getglobalfunciton.cp = mConstPool;
 	registerFunction(L"__GetGlobalFunction", &getglobalfunciton);
 
 

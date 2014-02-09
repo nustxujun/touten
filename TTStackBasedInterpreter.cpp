@@ -1,6 +1,8 @@
 #include "TTStackBasedInterpreter.h"
 #include "TTMemoryAllocator.h"
 #include "TTException.h"
+#include "TTFunctor.h"
+
 using namespace TT;
 
 #define INT_OPT(x, y, op, ret) {\
