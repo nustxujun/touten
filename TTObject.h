@@ -162,6 +162,45 @@ namespace TT
 		{
 			ObjectPtr obj;
 			Char* key;
+			Elem* next;
+		};
+
+	public:
+		class iterator
+		{
+			friend class Array;
+
+			const Elem* mElem;
+		public :
+
+			iterator(const Elem* elem) :mElem(elem)
+			{}
+
+			const Char* key()const
+			{
+				return mElem->key;
+			}
+
+			const Object& value()const
+			{
+				return *(mElem->obj);
+			}
+
+			iterator& operator++()
+			{
+				mElem = mElem->next;
+				return *this;
+			}
+
+			bool operator==(const iterator& i)
+			{
+				return mElem == i.mElem;
+			}
+
+			bool operator!=(const iterator& i)
+			{
+				return mElem != i.mElem;
+			}
 		};
 	public :
 		Array(bool hash, size_t cap = 8);
@@ -174,6 +213,9 @@ namespace TT
 		ObjectPtr get(const Char* key)const;
 
 		Array& operator=(const Array& arr);
+
+		iterator begin()const;
+		iterator end()const;
 
 	private:
 		void swap(Array& arr);

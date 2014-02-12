@@ -12,9 +12,13 @@ namespace TT
 	struct CallFrame
 	{
 		std::vector<ObjectPtr> vars;
+		//进入函数前的代码开始位置
 		const char* beginPos;
+		//进入函数前的代码当前位置
 		const char* curPos;
+		//函数自身存储空间
 		Object localenv;
+		//进入函数前的share空间
 		Object* sharedenv;
 		bool needret;
 	};

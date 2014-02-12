@@ -15,36 +15,24 @@ namespace TT
 		Bind(Touten* tt);
 		~Bind();
 
+		template<class T, class ... Args>
+		void bind(const String& name, Args ... args)
+		{
+			addFunctor(name, new T(args...));
+		}
+
 		template<class R, class ... Args>
 		void bind(const String& name, R (*func)(Args...))
 		{
 			Functor* f = new NormalFunction<R, Args...>(func);
-			auto ret = mFactors.insert(
-				Factors::value_type(name, f));
-			if (!ret.second)
-			{
-				delete f;
-				
-				TT_EXCEPT(ET_UNKNOWN, EL_NORMAL, "same function name", 0);
-				return;
-			}
-			mTT->registerOrRetrieveFunction(name, f);
+			addFunctor(name, f);
 		}
 
 		template<class O, class R, class ... Args>
 		void bind(const String& name, O* inst, R(O::*func)(Args...))
 		{
 			Functor* f = new ClassFunction<O, R, Args...>(inst, func);
-			auto ret = mFactors.insert(
-				Factors::value_type(name, f));
-			if (!ret.second)
-			{
-				delete f;
-				TT_EXCEPT(ET_UNKNOWN, EL_NORMAL, "same function name", 0);
-				return;
-
-			}
-			mTT->registerOrRetrieveFunction(name, f);
+			addFunctor(name, f);
 		}
 
 		template<class O, class R, class ... Args>
@@ -93,6 +81,22 @@ namespace TT
 
 
 		Touten* getTouten();
+
+	private:
+		void addFunctor(const String& name, Functor* func)
+		{
+			auto ret = mFactors.insert(
+				Factors::value_type(name, func));
+			if (!ret.second)
+			{
+				delete func;
+
+				TT_EXCEPT(ET_UNKNOWN, EL_NORMAL, "same function name", 0);
+				return;
+			}
+			mTT->registerOrRetrieveFunction(name, func);
+		}
+
 	private:
 		Touten* mTT;
 

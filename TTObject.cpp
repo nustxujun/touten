@@ -378,8 +378,9 @@ ObjectPtr::~ObjectPtr()
 Array::Array(bool hash, size_t cap)
 {
 	mHash = hash;
-	mLast = mHead = (Elem*)TT_MALLOC(cap * sizeof(Elem));
+	mHead = (Elem*)TT_MALLOC(cap * sizeof(Elem));
 	mTail = mHead + cap;
+	mLast = nullptr;
 	memset(mHead, 0, cap * sizeof(Elem));
 }
 
@@ -438,7 +439,11 @@ ObjectPtr& Array::operator[](const Char* key)
 	
 	elem->key = Tools::cloneString(key);
 	if (elem->obj.isNull())
+	{
 		elem->obj = Object();
+		elem->next = mLast;
+		mLast = elem;
+	}
 	return elem->obj;
 }
 
@@ -487,19 +492,36 @@ ObjectPtr Array::get(const Char* key) const
 Array& Array::operator=(const Array& arr)
 {
 	Array tmp(arr.mHash, arr.mTail - arr.mHead);
-	Elem* begt = tmp.mHead;
-	const Elem* bega = arr.mHead;
-	for (; begt < tmp.mTail; ++begt, ++bega)
+
+	if (arr.mHash)
 	{
-		//if (!bega->key) continue;
-		//Array被创建时 ，内存置了0，因此obj虽然不合法但是 isNull的返回一定正确
-		//因为如果不是hash表的情况下 key是 NULL
-		if (bega->obj.isNull()) continue;
-		begt->obj = bega->obj;
-		if (bega->key)
-			begt->key = Tools::cloneString(bega->key);
-		
+		for (auto i = arr.mLast; i != nullptr; i = i->next)
+			tmp[i->key] = i->obj;
 	}
+	else
+	{
+		Elem* begt = tmp.mHead;
+		const Elem* bega = arr.mHead;
+		for (; begt < tmp.mTail; ++begt, ++bega)
+		{
+			if (bega->obj.isNull()) continue;
+			begt->obj = bega->obj;
+		}
+	}
+
+	//Elem* begt = tmp.mHead;
+	//const Elem* bega = arr.mHead;
+	//for (; begt < tmp.mTail; ++begt, ++bega)
+	//{
+	//	//if (!bega->key) continue;
+	//	//Array被创建时 ，内存置了0，因此obj虽然不合法但是 isNull的返回一定正确
+	//	//因为如果不是hash表的情况下 key是 NULL
+	//	if (bega->obj.isNull()) continue;
+	//	begt->obj = bega->obj;
+	//	if (bega->key)
+	//		begt->key = Tools::cloneString(bega->key);
+	//	
+	//}
 	swap(tmp);
 	return *this;
 }
@@ -525,6 +547,17 @@ void Array::grow()
 		memset(mHead + size, 0, (newcap - size) * sizeof(Elem));
 	}
 
+}
+
+Array::iterator Array::begin()const
+{
+	//图方便，遍历顺序和插入顺序相反
+	return iterator(mLast);
+}
+
+Array::iterator Array::end()const
+{
+	return iterator(nullptr);
 }
 
 

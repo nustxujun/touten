@@ -466,6 +466,8 @@ void StackBasedInterpreter::execute(const ConstantPool& constpool, const char* c
 				CallFrame& old = callstack.top();
 				begin = old.beginPos;
 				current = old.curPos;
+				sharedenv = old.sharedenv;
+
 				bool bret = old.needret;
 				ObjectPtr ret(OT_NULL);
 				popCallFrame(ret);
@@ -480,7 +482,6 @@ void StackBasedInterpreter::execute(const ConstantPool& constpool, const char* c
 
 				CallFrame& frame = callstack.top();
 				localenv = &frame.localenv;
-				sharedenv = frame.sharedenv;
 			}
 			break;
 		case JZ:

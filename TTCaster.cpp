@@ -204,7 +204,7 @@ String Caster::castToString(const Object& o)
 		switch (o.val->type)
 		{
 		case OT_ARRAY:
-			return castToString(*o.val->arr->get((size_t)0));
+			return L"__Array";//castToString(*o.val->arr->get((size_t)0));
 		case OT_STRING:
 			return o.val->str.cont;
 			break;
@@ -220,6 +220,8 @@ String Caster::castToString(const Object& o)
 		case OT_INTEGER:
 			return Tools::toString(o.val->i);
 			break;
+		case OT_FUNCTION:
+			return L"__function";
 		default:
 			return L"null";
 		}
