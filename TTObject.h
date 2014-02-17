@@ -217,6 +217,8 @@ namespace TT
 		iterator begin()const;
 		iterator end()const;
 
+		bool isArray()const;
+
 	private:
 		void swap(Array& arr);
 		void grow();

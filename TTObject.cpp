@@ -404,7 +404,13 @@ ObjectPtr& Array::operator[](size_t index)
 		{
 			if (!checkSize(index)) grow();
 			if (mHead[index].obj.isNull())
-				mHead[index].obj = Object();
+			{
+				for (size_t i = index; i >= 0; --i)
+				{
+					if (!mHead[i].obj.isNull()) break;
+					mHead[i].obj = Object();
+				}
+			}
 			return mHead[index].obj;
 		}
 		else convertToHashMap();
@@ -558,6 +564,11 @@ Array::iterator Array::begin()const
 Array::iterator Array::end()const
 {
 	return iterator(nullptr);
+}
+
+bool Array::isArray()const
+{	
+	return !mHash;
 }
 
 
