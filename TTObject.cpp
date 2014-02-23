@@ -80,7 +80,7 @@ ValuePtr::ValuePtr(ObjectType ot)
 	mVal = (Value*)TT_MALLOC(sizeof(Value));
 	mCount = TT_NEW(size_t)(1);
 
-	memset(mVal, 0, sizeof(mVal));
+	memset(mVal, 0, sizeof(Value));
 	mVal->type = ot;
 }
 
@@ -128,9 +128,11 @@ void ValuePtr::releaseVal()
 	switch (mVal->type)
 	{
 	case OT_ARRAY:
+		if (mVal->arr != nullptr)
 		TT_DELETE(Array, mVal->arr);
 		break;
 	case OT_STRING:
+		if (mVal->str.cont != nullptr)
 		TT_FREE(mVal->str.cont);
 		break;
 	}
@@ -224,7 +226,7 @@ Object::Object(const Char* str, size_t size):
 	val->str.cont = Tools::cloneString(str, size);
 }
 
-Object::Object(FunctionValue v):
+Object::Object(const FunctionValue& v):
 	val(OT_FUNCTION)
 {
 	val->func = v;

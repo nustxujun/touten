@@ -98,7 +98,7 @@ StackBasedInterpreter::StackBasedInterpreter()
 	Caster::cast(mGlobalEnv, OT_ARRAY);
 }
 
-void StackBasedInterpreter::execute(const ConstantPool& constpool, const char* codes, size_t parasCount, const ObjectPtr* paras, Object* callret)
+void StackBasedInterpreter::execute(const ConstantPool& constpool, const char* codes, size_t functionInfo, size_t parasCount, const ObjectPtr* paras, Object* callret)
 {
 	CallStack callstack;
 
@@ -176,13 +176,28 @@ void StackBasedInterpreter::execute(const ConstantPool& constpool, const char* c
 	framebegin.sharedenv = localenv;
 	Object* sharedenv = localenv;
 	Object* curenv = 0;
-
-	if (parasCount != 0)
+	
+	size_t argsCount = functionInfo & FunctionValue::PARA_COUNT;
 	{
-		for (size_t i = 0; i < parasCount; ++i)
+		bool v = (functionInfo & FunctionValue::IS_VARIADIC) != 0;
+		ObjectPtr va(OT_ARRAY);
+		va->val->arr = TT_NEW(Array)(false);
+		for (size_t i = 0;; ++i)
 		{
-			pushOprPtr(paras[parasCount - i - 1]);
+			if (argsCount > i)
+			{ 
+				if (parasCount > i)
+					pushOprPtr(paras[parasCount - i - 1]);
+				else
+					pushOpr(Object());
+			}
+			else if (v && parasCount > i)
+				(*va->val->arr)[i - argsCount] = paras[parasCount - i - 1];
+			else
+				break;
 		}
+	
+		if (v) pushOprPtr(va);
 	}
 
 	while (true)

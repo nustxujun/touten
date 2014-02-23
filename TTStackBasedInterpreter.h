@@ -46,7 +46,7 @@ namespace TT
 	{
 	public :
 		StackBasedInterpreter();
-		void execute(const ConstantPool& cp, const char* codes, size_t parasCount, const ObjectPtr* paras, Object* obj);
+		void execute(const ConstantPool& cp, const char* codes, size_t functionInfo, size_t parasCount, const ObjectPtr* paras, Object* obj);
 
 	private:
 		void compareOpt(const Object& o1, const Object& o2, Instruction instr, Object& o);

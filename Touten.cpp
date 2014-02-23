@@ -130,11 +130,8 @@ bool Touten::call(const String& name, size_t parasCount, const ObjectPtr* paras,
 
 	TT::FunctionValue* begin = (FunctionValue*)(*mConstPool)[sym.sym->addrOffset];
 
-	if ( (begin->funcinfo & FunctionValue::IS_VARIADIC) == 0)
-		parasCount = std::min(begin->funcinfo & FunctionValue::PARA_COUNT, parasCount);
-
 	mInterpreter->execute((*mConstPool), ((Codes*)begin->codeAddr)->data(), 
-		parasCount, paras, ret);
+		begin->funcinfo, parasCount, paras, ret);
 	return true;
 }
 

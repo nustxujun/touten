@@ -46,6 +46,7 @@ void StackBasedAssembler::visit(FileNode* node)
 		g.sym = mScopeMgr.getGlobal()->createSymbol(GLOBAL_INIT_FUNC, ST_FUNCTION, AT_GLOBAL);
 	}
 	FunctionValue fv;
+	fv.funcinfo = 0;
 	fv.codeAddr = mCurScope->getCode();
 	g.sym->addrOffset = mConstPool << fv;
 

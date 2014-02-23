@@ -121,7 +121,7 @@ namespace TT
 		Object(const Char* str);
 		Object(const Char* str, size_t size);
 
-		Object(FunctionValue v);
+		Object(const FunctionValue& v);
 
 		~Object();
 		Object& operator=(const Object& obj);
