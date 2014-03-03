@@ -80,13 +80,13 @@ ValuePtr::ValuePtr(ObjectType ot)
 	mVal = (Value*)TT_MALLOC(sizeof(Value));
 	mCount = TT_NEW(size_t)(1);
 
-	memset(mVal, 0, sizeof(Value));
+	memset(mVal, 0, sizeof(*mVal));
 	mVal->type = ot;
 }
 
 ValuePtr::ValuePtr(const ValuePtr& ap)
 {
-	assert(*(((const int*)ap.mVal) - 1) > 0);
+	//assert(*(((const int*)ap.mVal) - 1) > 0);
 	mVal = ap.mVal;
 	mCount = ap.mCount;
 	++(*mCount);
@@ -410,7 +410,7 @@ ObjectPtr& Array::operator[](size_t index)
 				for (size_t i = index; i >= 0; --i)
 				{
 					if (!mHead[i].obj.isNull()) break;
-					mHead[i].obj = Object();
+					mHead[i].obj = OT_NULL;
 				}
 			}
 			return mHead[index].obj;
@@ -448,7 +448,7 @@ ObjectPtr& Array::operator[](const Char* key)
 	elem->key = Tools::cloneString(key);
 	if (elem->obj.isNull())
 	{
-		elem->obj = Object();
+		elem->obj = OT_NULL;
 		elem->next = mLast;
 		mLast = elem;
 	}
