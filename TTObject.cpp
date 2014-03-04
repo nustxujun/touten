@@ -407,7 +407,7 @@ ObjectPtr& Array::operator[](size_t index)
 			if (!checkSize(index)) grow();
 			if (mHead[index].obj.isNull())
 			{
-				for (size_t i = index; i >= 0; --i)
+				for (int i = index; i >= 0; --i)
 				{
 					if (!mHead[i].obj.isNull()) break;
 					mHead[i].obj = OT_NULL;
