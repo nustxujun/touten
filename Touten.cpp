@@ -10,6 +10,7 @@
 #include "TTScope.h"
 #include "TTStackBasedInterpreter.h"
 #include "TTFunctor.h"
+#include <windows.h>
 
 using namespace TT;
 
@@ -32,16 +33,21 @@ Touten::~Touten()
 
 bool Touten::loadFile(const String& name)
 {
-	std::wfstream f(name.c_str(), std::ios_base::in);
+	std::ifstream f(name, std::ios_base::in);
 	if (!f) return 0;
 
 	f.seekg(0,std::ios_base::end);
 	size_t size = f.tellg();
 	f.seekg(0, std::ios_base::beg);
-	std::vector<Char> b(size+1);
-	f.read(b.data(), size + 1);
-	
-	Lexer lexer(b.data());
+	std::vector<char> b(size + 1);
+	std::vector<Char> wb(size + 1);
+	f.read(b.data(), size);
+	b[size] = 0;
+
+	DWORD sizeWChar = MultiByteToWideChar(CP_ACP, 0, b.data(), -1, NULL, 0);
+	MultiByteToWideChar(CP_ACP, 0, b.data(), -1, wb.data(), sizeWChar);
+
+	Lexer lexer((Char*)wb.data());
 
 	struct Input: public ParserInput 
 	{
