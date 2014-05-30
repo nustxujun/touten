@@ -14,6 +14,7 @@ namespace TT
 		~Touten();
 
 		bool loadFile(const String& name);
+		bool load(const Char* buffer);
 		bool call(const String& name, size_t parasCount = 0, const ObjectPtr* paras = nullptr, Object* ret = nullptr);
 		
 		void registerFunction(const String& name, Functor* func);

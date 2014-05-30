@@ -47,9 +47,14 @@ bool Touten::loadFile(const String& name)
 	DWORD sizeWChar = MultiByteToWideChar(CP_ACP, 0, b.data(), -1, NULL, 0);
 	MultiByteToWideChar(CP_ACP, 0, b.data(), -1, wb.data(), sizeWChar);
 
-	Lexer lexer((Char*)wb.data());
+	return load(wb.data());
+}
 
-	struct Input: public ParserInput 
+bool Touten::load(const Char* buffer)
+{
+	Lexer lexer(buffer);
+
+	struct Input : public ParserInput
 	{
 		Lexer* l;
 		Token next()
@@ -61,7 +66,7 @@ bool Touten::loadFile(const String& name)
 
 		Token lookahead(size_t index)
 		{
-			size_t diff = (index < lookaheads.size())? 0: index + 1;
+			size_t diff = (index < lookaheads.size()) ? 0 : index + 1;
 			for (size_t i = 0; i < diff; ++i)
 			{
 				lookaheads.push_back(l->next());
@@ -79,7 +84,7 @@ bool Touten::loadFile(const String& name)
 	ast = parser.parse(&i);
 
 
-	StackBasedAssembler assembler( *mScopemgr, (*mConstPool));
+	StackBasedAssembler assembler(*mScopemgr, (*mConstPool));
 
 	assembler.assemble(ast);
 
